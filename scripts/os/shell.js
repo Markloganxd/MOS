@@ -229,6 +229,7 @@ function shellExecute(fn, args) {
     }
     // ... and finally write the prompt again.
     this.putPrompt();
+    _StdIn.refresh();
 }
 
 
@@ -280,10 +281,12 @@ function shellCurse() {
     _SarcasticMode = true;
 }
 
+// print the date
 function shellPrintDate() {
     _StdIn.putText(new Date().toString());    
 }
 
+// run diffuse bomb sequence
 function shellDiffuseBomb() {
     var that = this;
     setTimeout(
@@ -346,6 +349,7 @@ function shellDiffuseBomb() {
     17000);
 }
 
+// print whereami messages
 function shellWhereAmI() {
     var that = this;
     _StdIn.putText("Calculating GPS...");
@@ -382,15 +386,6 @@ function shellWhereAmI() {
     4700);
 }
 
-function shellGetHug() {
-    var link = "mailto:me@example.com"
-             + "?cc=myCCaddress@example.com"
-             + "&subject=" + escape("This is my subject")
-             + "&body=gethug"
-    ;
-
-    window.location.href = link;
-}
 
 function shellApology() {
     if (_SarcasticMode) {
@@ -448,7 +443,8 @@ function findInvalidInstructions(program) {
     var invalidCodes = "";
     var instructions = program.split(" ");
     instructions.forEach(function(instruction) {
-        if (!instruction.match("[a-fA-F0-9]{2}")) {
+        // make sure instruction is hex and only has 2 characters
+        if (!instruction.match("[a-fA-F0-9]{2}") || instruction.length != 2) {
             invalidCodes += " " + instruction;
         }
     });
