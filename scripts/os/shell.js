@@ -351,39 +351,17 @@ function shellDiffuseBomb() {
 
 // print whereami messages
 function shellWhereAmI() {
-    var that = this;
     _StdIn.putText("Calculating GPS...");
     _StdIn.advanceLine();
-    setTimeout(
-        function() {
-            _StdIn.putText(">Analyzing results...");
-            _StdIn.advanceLine();
-        }, 
-    500);
-    setTimeout(
-        function() {
-            _StdIn.putText(">>Initializing coordinate tracker...");
-            _StdIn.advanceLine();
-        }, 
-    1200);
-    setTimeout(
-        function() {
-            _StdIn.putText(">>Sending results...");
-            _StdIn.advanceLine();
-        }, 
-    2400);
-    setTimeout( 
-        function() {
-            _StdIn.putText("Location received. Thank you for registering with the NSA");
-            _StdIn.advanceLine();
-            _StdIn.putText("Civilian Monitoring Program.");
-            putPrompt();
-        }, 
-    4600);
-    setTimeout(function() { 
-        _StdIn.advanceLine();
-        _StdIn.putText(">"); },
-    4700);
+    _StdIn.putText("Analyzing results...");
+    _StdIn.advanceLine();
+    _StdIn.putText("Initializing coordinate tracker...");
+    _StdIn.advanceLine();
+    _StdIn.putText("Sending results...");
+    _StdIn.advanceLine();
+    _StdIn.putText("Location received. Thank you for registering with the NSA");
+    _StdIn.advanceLine();
+    _StdIn.putText("Civilian Monitoring Program.");
 }
 
 
