@@ -11,14 +11,16 @@
 //
 // Global CONSTANTS
 //
-var APP_NAME = "AlanBBOS";  // 'cause I was at a loss for a better name.
-var APP_VERSION = "0.07";   // What did you expect?
+var APP_NAME = "MOS";  // 'cause I was at a loss for a better name.
+var APP_VERSION = "0.01";   // What did you expect?
 
 var CPU_CLOCK_INTERVAL = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
 var TIMER_IRQ = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                     // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
 var KEYBOARD_IRQ = 1;  
+var OS_ERROR = 2;
+var KEYBOARD_ERROR = 3;
 
 
 //
@@ -44,11 +46,15 @@ var _KernelInterruptQueue = null;
 var _KernelBuffers = null;
 var _KernelInputQueue = null;
 
+// OS status
+var _OsStatus = "";
+
 // Standard input and output
 var _StdIn  = null;
 var _StdOut = null;
 
 // UI
+ /** global desc*/
 var _Console = null;
 var _OsShell = null;
 
