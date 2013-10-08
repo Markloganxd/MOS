@@ -10,12 +10,16 @@
         <!-- Globals CONSTANTS and _Variables. Must included be first.
         -->
         <script type="text/javascript" src="globals.js"></script>
+        <script type="text/javascript" src="scripts/host/memory.js"></script>
         <!-- Host (Hardware Simulation) Routines -->
         <script type="text/javascript" src="scripts/host/control.js"></script>
         <script type="text/javascript" src="scripts/host/devices.js"></script>
         <script type="text/javascript" src="scripts/host/cpu.js"></script>
         <!-- Virtual OS Routines: Make sure Kernel code is last, since
         it needs those above it. -->
+        
+        <script type="text/javascript" src="scripts/os/processControlBlock.js"></script>
+        <script type="text/javascript" src="scripts/os/memoryManager.js"></script>
         <script type="text/javascript" src="scripts/os/interrupt.js"></script>
         <script type="text/javascript" src="scripts/os/canvastext.js"></script>
         <script type="text/javascript" src="scripts/os/console.js"></script>

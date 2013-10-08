@@ -58,8 +58,6 @@ function krnBootstrap() // Page 8.
     }
 }
 
-
-
 function krnShutdown() {
     krnTrace("begin shutdown OS");
     // TODO: Check for running processes.  Alert if there are some, alert and stop.  Else...    
@@ -148,7 +146,6 @@ function krnTimerISR() // The built-in TIMER (not clock) Interrupt Service Routi
 }
 
 
-
 //
 // System Calls... that generate software interrupts via tha Application Programming Interface library routines.
 //
@@ -164,6 +161,44 @@ function krnTimerISR() // The built-in TIMER (not clock) Interrupt Service Routi
 // - WriteFile
 // - CloseFile
 
+
+// mapping of pids to process control blocks
+var krnProcesses = [];
+
+// register a pcb into the map
+function krnRegisterProcess(pid, pcb) {
+    krnProcesses[pid] = pcb;    
+}
+
+function krnCreateProcess(codes) {
+    // TODO get starting address for process (currently just using 0)
+    var startAddress = 0;
+    var currentAddress = startAddress;
+    
+    // puts codes in memory
+    codes.forEach(function(code) {
+        _MemoryManager.storeByte(currentAddress, code);
+        currentAddress++;
+    });
+    
+    // create pcb
+    var pcb = new ProcessControlBlock();
+    pcb.pid = getNewPid();
+    pcb.start = startAddress;
+    pcb.end = startAddress + codes.length;
+    
+    console.log(Memory[0]);
+    console.log(Memory[1]);
+    console.log(Memory[2]);
+    console.log(pcb.end);
+    // adds to pcb map
+    krnRegisterProcess(pcb.pid, pcb);
+    console.log(pcb.pid);
+}
+
+function getNewPid() {
+    return PID_INCREMENTER++;
+}
 
 //
 // OS Utility Routines

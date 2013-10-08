@@ -404,11 +404,12 @@ function shellChangeStatus(args) {
 }
 
 function shellLoad(args) {
-    var program = document.getElementById("taProgramInput").value;
-    var invalidInstructions = findInvalidInstructions(program);
-    if (invalidInstructions.length > 0) {
-        _StdIn.putText("invalid OP codes: " + invalidInstructions);
+    var input = document.getElementById("taProgramInput").value;
+    var program = validateInstructions(input);
+    if (program.invalidCodes.length > 0) {
+        _StdIn.putText("invalid OP codes: " + program.invalidCodes.join(", "));
     } else {
+        krnCreateProcess(program.validCodes);
         _StdIn.putText("Loaded successfully.");
     }
 }
@@ -417,16 +418,22 @@ function shellCrashAndBurn() {
     _KernelInterruptQueue.enqueue(new Interrupt(OS_ERROR, ""));
 }
 
-function findInvalidInstructions(program) {
-    var invalidCodes = "";
+function validateInstructions(program) {
+    var invalidCodes = [];
+    var validCodes = [];
     var instructions = program.split(" ");
     instructions.forEach(function(instruction) {
         // make sure instruction is hex and only has 2 characters
         if (!instruction.match("[a-fA-F0-9]{2}") || instruction.length != 2) {
-            invalidCodes += " " + instruction;
+            invalidCodes.push(instruction);
+        } else {
+            validCodes.push(instruction);
         }
-    });
-    return invalidCodes;
+    }); 
+    return {
+        validCodes : validCodes,
+        invalidCodes : invalidCodes
+    };
 }
 
 function shellMan(args) {
