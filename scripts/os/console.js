@@ -15,6 +15,7 @@ function CLIconsole() {
     this.CurrentYPosition = _DefaultFontSize;
     this.history = new Array();
     this.historyIndex = 0;
+    this.active = true;
     this.screenText = "";
     this.buffer = "";
 

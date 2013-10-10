@@ -17,6 +17,18 @@ function trim(str) {     // Use a regular expression to remove leading and trail
 	
 }
 
+function decimalToHex(decimal) {
+    var hex = decimal.toString(16).toUpperCase();
+    if (hex.length === 1) {
+        hex = "0" + hex;
+    }
+    return hex;
+}
+
+function hexToDecimal(hex) {
+    return parseInt(hex, 16);
+}
+
 function rot13(str) {   // An easy-to understand implementation of the famous and common Rot13 obfuscator.
                         // You can do this in three lines with a complex regular expression, but I'd have
     var retVal = "";    // trouble explaining it in the future.  There's a lot to be said for obvious code.

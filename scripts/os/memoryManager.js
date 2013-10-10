@@ -1,5 +1,9 @@
 function MemoryManager() {
-    this.storeByte = function(address, hex) {
-      Memory[address] = hex;
-    };
+    this.getByte = function(address) {
+        return Memory[address];
+    }
+    
+    this.storeByte = function(address, value) {
+        Memory[address] = value;    
+    }
 }

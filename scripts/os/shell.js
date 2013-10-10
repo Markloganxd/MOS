@@ -130,6 +130,13 @@ function shellInit() {
     sc.function = shellDiffuseBomb;
     this.commandList[this.commandList.length] = sc; 
     
+    // run process
+    sc = new ShellCommand();
+    sc.command = "run";
+    sc.description = " - run process";
+    sc.function = shellRun;
+    this.commandList[this.commandList.length] = sc; 
+    
     // processes - list the running processes and their IDs
     // kill <id> - kills the specified process id.
 
@@ -227,9 +234,20 @@ function shellExecute(fn, args) {
     if (_StdIn.CurrentXPosition > 0) {
         _StdIn.advanceLine();
     }
-    // ... and finally write the prompt again.
-    this.putPrompt();
-    _StdIn.refresh();
+    
+    // deactivate console while process is running
+    _StdIn.active = false;
+
+    // create a timer to reactivate console when process is finished
+    var timerId = null;
+    timerId = setInterval(function() {
+        if(!_CPU.isExecuting) { 
+            _OsShell.putPrompt();
+            _StdIn.refresh();
+            _StdIn.active = true;
+            clearTimeout(timerId);
+        }
+    }, 100);    
 }
 
 
@@ -259,7 +277,6 @@ function UserCommand() {
     this.command = "";
     this.args = [];
 }
-
 
 //
 // Shell Command Functions.  Again, not part of Shell() class per se', just called from there.
@@ -412,6 +429,10 @@ function shellLoad(args) {
         krnCreateProcess(program.validCodes);
         _StdIn.putText("Loaded successfully.");
     }
+}
+
+function shellRun(args) {
+    krnStartProcess(args[0]);
 }
 
 function shellCrashAndBurn() {

@@ -34,6 +34,11 @@ var _Mode = 0;   // 0 = Kernel Mode, 1 = User Mode.  See page 21.
 
 var _MemoryManager = null;
 
+var _CurrentProcess = null;
+
+// process statuses
+var RUNNING = 0;
+
 var _Canvas = null;               // Initialized in hostInit().
 var _DrawingContext = null;       // Initialized in hostInit().
 var _DefaultFontFamily = "sans";  // Ignored, I think. The was just a place-holder in 2008, but the HTML canvas may have use for it.

@@ -95,6 +95,15 @@ function krnOnCPUClockPulse() {
         krnTrace("Idle");
     }
     document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
+    var html = "<table>";
+    for (var i = 1; i <= 256; i++) {
+        html += "<td>" + _MemoryManager.getByte(i - 1) + "</td>";
+        if (i % 8 === 0) {
+            html += "</tr><tr>";
+        }
+    }
+    html += "</tr></table>";
+    document.getElementById("memory").innerHTML = html
 }
 
 // 
@@ -126,8 +135,11 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
         krnTimerISR(); // Kernel built-in routine for timers (not the clock).
         break;
     case KEYBOARD_IRQ:
-        krnKeyboardDriver.isr(params); // Kernel mode device driver
-        _StdIn.handleInput();
+        // no keys are processed if the console isn't active
+        if (_StdIn.active) {
+            krnKeyboardDriver.isr(params); // Kernel mode device driver
+            _StdIn.handleInput();
+        }
         break;
     case OS_ERROR:
         krnTrapError("OS error!");
@@ -170,6 +182,12 @@ function krnRegisterProcess(pid, pcb) {
     krnProcesses[pid] = pcb;    
 }
 
+function krnStartProcess(pid) {
+    _CurrentProcess = krnProcesses[pid];
+    _CPU.switchTo(krnProcesses[pid]);
+    _CPU.isExecuting = true;
+}
+
 function krnCreateProcess(codes) {
     // TODO get starting address for process (currently just using 0)
     var startAddress = 0;
@@ -185,15 +203,13 @@ function krnCreateProcess(codes) {
     var pcb = new ProcessControlBlock();
     pcb.pid = getNewPid();
     pcb.start = startAddress;
-    pcb.end = startAddress + codes.length;
+    pcb.end = 256;
     
-    console.log(Memory[0]);
-    console.log(Memory[1]);
-    console.log(Memory[2]);
-    console.log(pcb.end);
     // adds to pcb map
     krnRegisterProcess(pcb.pid, pcb);
-    console.log(pcb.pid);
+}
+
+function krnRunProcess(pid) {
 }
 
 function getNewPid() {
