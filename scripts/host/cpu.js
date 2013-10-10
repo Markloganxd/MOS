@@ -80,6 +80,13 @@ function Cpu() {
         }
         
         this.isExecuting = false;
+        
+        // updating current pcb
+        this.storeInto(_CurrentProcess);
+        _StdIn.putText("Process finished. State of PCB: ")
+        _StdIn.advanceLine();
+        _StdIn.putText(_CurrentProcess.toString());
+        _StdIn.advanceLine();
         // TODO: Accumulate CPU usage and profiling statistics here.
     };
 }
@@ -163,6 +170,7 @@ function addWithCarry() {
 function loadXRegisterWithConstant() {
     // store next byte as constant into x register
     _CPU.Xreg = hexToDecimal(_MemoryManager.getByte(_CPU.PC));
+    console.log(_CPU.Xreg);
     _CPU.PC++;
 }
 
@@ -200,7 +208,6 @@ function loadYRegisterFromAddress() {
     var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
     _CPU.PC++;
     // create the full address
-    console.log(address);
     var address = (addressFirstHalf + addressSecondHalf);
     // convert to decimal
     var addressInDecimal = hexToDecimal(address);

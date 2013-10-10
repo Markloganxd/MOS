@@ -234,20 +234,26 @@ function shellExecute(fn, args) {
     if (_StdIn.CurrentXPosition > 0) {
         _StdIn.advanceLine();
     }
+    // if a process is being executed, deactivate console until it finishes
+    if(fn === shellRun) {
+        // deactivate console while process is running
+        _StdIn.active = false;
     
-    // deactivate console while process is running
-    _StdIn.active = false;
+        // create a timer to reactivate console when process is finished
+        var timerId = null;
+        timerId = setInterval(function() {
+            if(!_CPU.isExecuting) { 
+                _OsShell.putPrompt();
+                _StdIn.refresh();
+                _StdIn.active = true;
+                clearTimeout(timerId);
+            }
+        }, 50);
+    } else {
+        _OsShell.putPrompt();
+        _StdIn.refresh();
 
-    // create a timer to reactivate console when process is finished
-    var timerId = null;
-    timerId = setInterval(function() {
-        if(!_CPU.isExecuting) { 
-            _OsShell.putPrompt();
-            _StdIn.refresh();
-            _StdIn.active = true;
-            clearTimeout(timerId);
-        }
-    }, 100);    
+    }
 }
 
 
@@ -426,8 +432,8 @@ function shellLoad(args) {
     if (program.invalidCodes.length > 0) {
         _StdIn.putText("invalid OP codes: " + program.invalidCodes.join(", "));
     } else {
-        krnCreateProcess(program.validCodes);
-        _StdIn.putText("Loaded successfully.");
+        var pid = krnCreateProcess(program.validCodes);
+        _StdIn.putText("Process Loaded (pid " + pid + ")");
     }
 }
 

@@ -30,7 +30,6 @@ function convertToCompatibleChar(keyCode, isShifted) {
         if (keyCode == 48) chr = String.fromCharCode(41) // )
         else if (keyCode == 49) {
             chr = String.fromCharCode(33);
-            console.log("ouch not there!")
         } // !
         else if (keyCode == 50) chr = String.fromCharCode(64) // @
         else if (keyCode == 51) chr = String.fromCharCode(35) // #

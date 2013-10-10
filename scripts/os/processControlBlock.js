@@ -14,4 +14,7 @@ function ProcessControlBlock() {
     this.contains = function(address) {
         return (address >= that.start) && (address < that.end);        
     }
+    this.toString = function(){
+        return "pid: " + this.pid + ", PC: " + this.PC + ", Acc: " + this.Acc + ", Xreg: " + this.Xreg + ", Yreg: " + this.Yreg + ", Zflag: " + this.Zflag
+    }
 }

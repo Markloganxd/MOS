@@ -51,7 +51,6 @@ function krnBootstrap() // Page 8.
     krnTrace("Creating and Launching the shell.");
     _OsShell = new Shell();
     _OsShell.init();
-
     // Finally, initiate testing.
     if (_GLaDOS) {
         _GLaDOS.afterStartup();
@@ -92,7 +91,7 @@ function krnOnCPUClockPulse() {
     }
     else // If there are no interrupts and there is nothing being executed then just be idle.
     {
-        krnTrace("Idle");
+        // krnTrace("Idle");
     }
     document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
     var html = "<table>";
@@ -103,7 +102,12 @@ function krnOnCPUClockPulse() {
         }
     }
     html += "</tr></table>";
-    document.getElementById("memory").innerHTML = html
+    document.getElementById("memory").innerHTML = html;
+    document.getElementById("Accumulator").innerHTML = _CPU.Acc;
+    document.getElementById("PC").innerHTML = _CPU.PC;
+    document.getElementById("Xregister").innerHTML = _CPU.Xreg;
+    document.getElementById("Yregister").innerHTML = _CPU.Yreg;
+    document.getElementById("Zflag").innerHTML = _CPU.Zflag;
 }
 
 // 
@@ -135,9 +139,9 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
         krnTimerISR(); // Kernel built-in routine for timers (not the clock).
         break;
     case KEYBOARD_IRQ:
-        // no keys are processed if the console isn't active
-        if (_StdIn.active) {
+        // no keys are handled if the console isn't active
             krnKeyboardDriver.isr(params); // Kernel mode device driver
+        if (_StdIn.active) {
             _StdIn.handleInput();
         }
         break;
@@ -145,7 +149,7 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
         krnTrapError("OS error!");
         break;
     case KEYBOARD_ERROR:
-        krnTrapError("Invalid character press");
+        hostLog("Invalid character press");
         break;
     default:
         krnTrapError("Invalid Interrupt Request. irq=" + irq + " params=[" + params + "]");
@@ -177,18 +181,35 @@ function krnTimerISR() // The built-in TIMER (not clock) Interrupt Service Routi
 // mapping of pids to process control blocks
 var krnProcesses = [];
 
+// get PCB from pid
+function krnFetchProcess(pid) {
+    if(typeof krnProcesses[pid] == 'undefined') {
+        // does not exist
+        hostLog("pid " + pid + " does not exist.")
+        return null;
+    } else {
+        // does exist
+        return krnProcesses[pid];    
+    }
+}
+
 // register a pcb into the map
 function krnRegisterProcess(pid, pcb) {
     krnProcesses[pid] = pcb;    
 }
 
 function krnStartProcess(pid) {
-    _CurrentProcess = krnProcesses[pid];
-    _CPU.switchTo(krnProcesses[pid]);
-    _CPU.isExecuting = true;
+    var process = krnFetchProcess(pid);
+    if (process !== null) {
+        _CurrentProcess = process;
+        _CPU.switchTo(process);
+        _CPU.isExecuting = true;
+    }
 }
 
 function krnCreateProcess(codes) {
+    // clear memory in current block
+    _MemoryManager.clearMemory();
     // TODO get starting address for process (currently just using 0)
     var startAddress = 0;
     var currentAddress = startAddress;
@@ -207,9 +228,8 @@ function krnCreateProcess(codes) {
     
     // adds to pcb map
     krnRegisterProcess(pcb.pid, pcb);
-}
 
-function krnRunProcess(pid) {
+    return pcb.pid;
 }
 
 function getNewPid() {
