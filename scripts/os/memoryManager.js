@@ -1,4 +1,6 @@
 function MemoryManager() {
+    that = this;
+    this.partitionSize = 256;
     this.getByte = function(address) {
         return Memory[address];
     }
@@ -8,7 +10,7 @@ function MemoryManager() {
     }
     
     this.clearMemory = function() {
-        for(var i = 0; i < 256; i++) {
+        for(var i = 0; i < that.partitionSize; i++) {
             Memory[i] = "00";
         }
     }

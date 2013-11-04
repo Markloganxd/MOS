@@ -87,6 +87,8 @@ function convertToCompatibleChar(keyCode, isShifted) {
         chr = "down";
     } else if (keyCode == 16) {
         chr = "shift";
+    } else if (keyCode == "\n") {
+        chr = "\n";
     }
     return chr;    
 }

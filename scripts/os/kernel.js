@@ -80,19 +80,27 @@ function krnOnCPUClockPulse() {
     // Check for an interrupt, are any. Page 560
     if (_KernelInterruptQueue.getSize() > 0) {
         // Process the first interrupt on the interrupt queue.
-        // TODO: Implement a priority queue based on the IRQ number/id to enforce interrupt priority.
         var interrupt = _KernelInterruptQueue.dequeue();
         krnInterruptHandler(interrupt.irq, interrupt.params);
     }
     else if (_CPU.isExecuting) // If there are no interrupts then run one CPU cycle if there is anything being processed.
     {
         _CPU.cycle();
-        //refresh the status
+        // if the CPU has finished executing
+        if (!_CPU.isExecuting) {
+            // updating current pcb
+            _CPU.storeInto(_CurrentProcess);
+            _StdOut.putText("Process finished. State of PCB: ")
+            _StdOut.advanceLine();
+            _StdOut.putText(_CurrentProcess.toString());
+            _StdOut.advanceLine();
+        }
     }
     else // If there are no interrupts and there is nothing being executed then just be idle.
     {
         // krnTrace("Idle");
     }
+    // refresh status
     document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
     var html = "<table>";
     for (var i = 1; i <= 256; i++) {
@@ -138,9 +146,14 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
     case TIMER_IRQ:
         krnTimerISR(); // Kernel built-in routine for timers (not the clock).
         break;
+    case CONSOLE_OUTPUT_IRQ:
+        writeToConsole(params);
+        break;
+    case TERMINATE_PROCESS_IRQ:
+        krnTerminateCurrentProcess();
     case KEYBOARD_IRQ:
         // no keys are handled if the console isn't active
-            krnKeyboardDriver.isr(params); // Kernel mode device driver
+        krnKeyboardDriver.isr(params); // Kernel mode device driver
         if (_StdIn.active) {
             _StdIn.handleInput();
         }
@@ -164,7 +177,33 @@ function krnTimerISR() // The built-in TIMER (not clock) Interrupt Service Routi
 
 //
 // System Calls... that generate software interrupts via tha Application Programming Interface library routines.
-//
+function writeToConsole(type) {
+    if (type === 1) {
+        // removing leading zeros
+        var value = _CPU.Yreg.toString().replace(/^0/, '');
+        _StdOut.putText(value);
+    }
+    //	output null terminated string starting from y register
+    else if (type === 2) {
+        // starting position
+        var currentAddress = hexToDecimal(_CPU.Yreg);
+        var hexValue = _MemoryManager.getByte(currentAddress);
+        while (hexValue != "00") {
+            // turn key code number into char and output it
+            var charCode = hexToDecimal(hexValue);
+            var chr = String.fromCharCode(charCode);
+            _StdOut.putText(chr);
+            
+            // Increment the address
+            currentAddress++;
+            hexValue = _MemoryManager.getByte(currentAddress);
+        }
+    }
+    // new line
+    _StdOut.advanceLine();
+}
+
+
 // Some ideas:
 // - ReadConsole
 // - WriteConsole
@@ -191,6 +230,10 @@ function krnFetchProcess(pid) {
         // does exist
         return krnProcesses[pid];    
     }
+}
+
+function krnTerminateCurrentProcess() {
+    _CPU.isExecuting = false;
 }
 
 // register a pcb into the map

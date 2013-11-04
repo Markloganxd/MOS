@@ -21,6 +21,9 @@ var TIMER_IRQ = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt prio
 var KEYBOARD_IRQ = 1;  
 var OS_ERROR = 2;
 var KEYBOARD_ERROR = 3;
+var TERMINATE_PROCESS_IRQ = 4;
+var CONTEXT_SWITCH_IRQ = 5;
+var CONSOLE_OUTPUT_IRQ = 6;
 
 
 //

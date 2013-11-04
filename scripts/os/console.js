@@ -37,7 +37,7 @@ function CLIconsole() {
 
     this.updateStatus = function() { 
         document.getElementById("status").innerHTML = "Status: " + this.status + "  -- " + new Date();
-    }
+    };
     
     this.handleInput = function() {
         while (_KernelInputQueue.getSize() > 0) {
@@ -51,8 +51,9 @@ function CLIconsole() {
                 } else if (chr == "down") {
                     this.showPreviousCommand(-1);                
                 }
-            }
-            else if (chr == String.fromCharCode(13)) {
+            } else if (chr == "\n") {
+                this.advanceLine();
+            } else if (chr == String.fromCharCode(13)) {
                 // The enter key marks the end of a console command, so ...
                 // ... tell the shell ...
                 _OsShell.handleInput(this.buffer);
@@ -103,6 +104,9 @@ function CLIconsole() {
     this.refresh = function() {
         var currentX = this.CurrentXPosition;
         var lines = this.screenText.match(/[^\r\n]+/g);
+        if (this.screenText[this.screenText.length-1] == "\n") {
+            lines.push("");
+        }
         var maxLines = Math.floor(_Canvas.height / (_DefaultFontSize + _FontHeightMargin));
         if (lines.length > maxLines) {
             var startIndex = lines.length - maxLines;
@@ -147,5 +151,6 @@ function CLIconsole() {
         this.screenText += "\n";
         this.CurrentXPosition = 0;
         this.CurrentYPosition += _DefaultFontSize + _FontHeightMargin;
+        this.refresh();
     };
 }

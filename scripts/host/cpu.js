@@ -72,22 +72,9 @@ function Cpu() {
 	
     this.cycle = function() {
         krnTrace("CPU cycle");
-        while (_MemoryManager.getByte(_CPU.PC) !== "00") {
-            var opcode = _MemoryManager.getByte(_CPU.PC);
-            this.PC++;
-            perform(opcode);
-            //console.log("acc: " + this.Acc + "\n" + "PC" + this.PC + "\n" + " ---------- ");
-        }
-        
-        this.isExecuting = false;
-        
-        // updating current pcb
-        this.storeInto(_CurrentProcess);
-        _StdIn.putText("Process finished. State of PCB: ")
-        _StdIn.advanceLine();
-        _StdIn.putText(_CurrentProcess.toString());
-        _StdIn.advanceLine();
-        // TODO: Accumulate CPU usage and profiling statistics here.
+        var opcode = _MemoryManager.getByte(_CPU.PC);
+        this.PC++;
+        perform(opcode);
     };
 }
 
@@ -227,7 +214,7 @@ function noOperation() {
 }
 
 function sysBreak() {
-    _CPU.isExecuting = false;
+    _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROCESS_IRQ, ""));
 }
 
 function compareToXRegister() {
@@ -298,34 +285,5 @@ function incrementValueAtAddress() {
 }
 
 function sysCall() {
-    // output the value of the y register (as a decimal)
-    if (_CPU.Xreg === 1) {
-        
-        // removing leading zeros
-        var value = _CPU.Yreg.toString().replace(/^0/, '');
-        _StdIn.putText(value);
-
-        // new line
-        _StdIn.advanceLine();
-    }
-    //	output null terminated string starting from y register
-    else if (_CPU.Xreg === 2) {
-        // starting position
-        var addressInDecimal = hexToDecimal(_CPU.Yreg);
-        
-        var hexValue = _MemoryManager.getByte(addressInDecimal);
-        
-        while (hexValue != "00") {
-            // turn key code number into char and output it
-            var charCode = hexToDecimal(hexValue);
-            var chr = String.fromCharCode(charCode);
-            _StdIn.putText(chr);
-            
-            // Increment the address
-            addressInDecimal++;
-            hexValue = _MemoryManager.getByte(addressInDecimal);
-        }
-        // new line
-        _StdIn.advanceLine();
-    }
+    _KernelInterruptQueue.enqueue(new Interrupt(CONSOLE_OUTPUT_IRQ, _CPU.Xreg));
 }
