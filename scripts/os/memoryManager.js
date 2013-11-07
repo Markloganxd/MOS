@@ -2,6 +2,10 @@ function Partition(base, limit) {
     this.base = base;
     this.limit = limit;
     this.available = true;
+    this.contains = function(address) {
+        var absoluteAddress = this.base + address;
+        return (absoluteAddress >= this.base) && (absoluteAddress < this.limit);        
+    };
 }
 
 function MemoryManager() {
@@ -13,10 +17,19 @@ function MemoryManager() {
         new Partition(this.partitionSize * 2, this.partitionSize * 3),
     ];
     this.getByte = function(partition, address) {
-        return Memory[partition.base + address];
+        if (partition.contains(address)) {
+          return Memory[partition.base + address];
+        } else {
+          _KernelInterruptQueue.enqueue(new Interrupt(READ_VIOLATION_IRQ, address));
+          return "Er"
+        }
     };
     this.storeByte = function(partition, address, value) {
-        Memory[partition.base + address] = value;    
+        if (partition.contains(address)) {
+          Memory[partition.base + address] = value;
+        } else {
+          _KernelInterruptQueue.enqueue(new Interrupt(WRITE_VIOLATION_IRQ, address));
+        }
     };
     this.getPartition = function(id) {
         return this.partitions[id];
@@ -34,10 +47,12 @@ function MemoryManager() {
         }
         return freePartition;
     };
+    this.freePartition = function(partition) {
+        partition.available = true;
+    };
     this.clearPartition = function(partition) {
         for(var i = partition.base; i < partition.limit; i++) {
             Memory[i] = "00";
-            console.log(Memory[i])
         }
         partition.available = true;
     };

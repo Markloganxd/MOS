@@ -1,6 +1,7 @@
 function ProcessControlBlock() {
     this.pid = 0;
     this.partition = null;
+    this.state = "awesome";
     
     // used for saving state of CPU
     this.PC = 0;     // Program Counter

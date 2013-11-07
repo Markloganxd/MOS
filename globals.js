@@ -24,6 +24,9 @@ var KEYBOARD_ERROR = 3;
 var TERMINATE_PROCESS_IRQ = 4;
 var CONTEXT_SWITCH_IRQ = 5;
 var CONSOLE_OUTPUT_IRQ = 6;
+var CONTEXT_SWITCH_IRQ = 7;
+var WRITE_VIOLATION_IRQ = 8;
+var READ_VIOLATION_IRQ = 9;
 
 
 //
@@ -55,6 +58,7 @@ var _Trace = true;
 var _KernelInterruptQueue = null;
 var _KernelBuffers = null;
 var _KernelInputQueue = null;
+var _ReadyQueue = [];
 
 // OS status
 var _OsStatus = "";
@@ -76,6 +80,10 @@ var krnKeyboardDriver = null;
 
 // PID incrementer 
 var PID_INCREMENTER = 0;
+
+// Scheduler data
+var SCHEDULER_QUANTUM = 6;
+var SCHEDULER_COUNT = 0;
 
 // For testing...
 var _GLaDOS = null;

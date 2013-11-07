@@ -1,80 +1,89 @@
 /* alanbbos.css */
- body {
-    background: #909193 url(images/linen.png) repeat;
-    font-family: Helvetica, Verdana, Arial, sans-serif;
-    font-size: 12pt;
-    font-weight: normal;
-    font-style: normal;
+body {
+  background: #909193 url(images/linen.png) repeat;
+  font-family: Helvetica, Verdana, Arial, sans-serif;
+  font-size: 12pt;
+  font-weight: normal;
+  font-style: normal;
 }
 h1 {
-    color: black;
-    font-size: 24pt;
-    font-weight: normal;
-    font-style: normal;
-    border-bottom: 1px solid black;
+  color: black;
+  font-size: 24pt;
+  font-weight: normal;
+  font-style: normal;
+  border-bottom: 1px solid black;
 }
 h2 {
-    color: black;
-    font-size: 20pt;
-    font-weight: normal;
-    font-style: normal;
+  color: black;
+  font-size: 20pt;
+  font-weight: normal;
+  font-style: normal;
 }
 h3 {
-    font-family: Helvetica, Verdana, Arial, sans-serif;
-    font-size: 16pt;
-    font-weight: normal;
-    font-style: normal;
+  font-family: Helvetica, Verdana, Arial, sans-serif;
+  font-size: 16pt;
+  font-weight: normal;
+  font-style: normal;
 }
 #display {
-    background-color:#DFDBC3;
-    border: 2px solid red;
-    cursor: default;
+  background-color:#DFDBC3;
+  border: 2px solid red;
+  cursor: default;
 }
 .normal_button {
-    width: 100px;
+  width: 100px;
 }
 .footerText {
-    color: black;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 8pt;
-    text-align: center;
-    clear: both;
+  color: black;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  text-align: center;
+  clear: both;
 }
 #cpu {
-    width: 200px;
+  width: 200px;
 }
 #memory {
-    float:left;
-    height: 400px;
-    width: 220px;
-    overflow: auto;
+  float:left;
+  height: 400px;
+  width: 220px;
+  overflow: auto;
 }
 #input {
-    float: left;
+  float: left;
 }
 h3 {
-    margin: 0;
+  margin: 0;
 }
 #data {
-    float: left;
-    background-color: #C3E4ED;
-    padding: 0 5px;
-    margin: 5px 10px;
+  float: left;
+  background-color: #C3E4ED;
+  padding: 0 5px;
+  margin: 5px 10px;
+}
+#partition1 {
+  background-color: #eefcfb;
+}
+#partition2 {
+  background-color: #d9fcfb;
+}
+#partition3 {
+  background-color: #eefcfb;
 }
 #taLog {
-    width: 360px;
-    height: 450px;
+  width: 360px;
+  height: 450px;
 }
 td {
-    text-align: center;
-    width: 38px;
+  text-align: center;
+  width: 38px;
 }
 table {
-    border-collapse:collapse;
+  border-collapse:collapse;
 }
 table, th, td {
-    border: 1px solid black;
+  border: 1px solid black;
 }
 #log {
-    float: left;
+  float: left;
 }

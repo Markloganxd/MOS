@@ -137,6 +137,20 @@ function shellInit() {
     sc.function = shellRun;
     this.commandList[this.commandList.length] = sc; 
     
+    // run all processes
+    sc = new ShellCommand();
+    sc.command = "runall";
+    sc.description = " - run all process";
+    sc.function = shellRunAll;
+    this.commandList[this.commandList.length] = sc; 
+
+    // kill a process
+    sc = new ShellCommand();
+    sc.command = "kill";
+    sc.description = " - kill a process by its pid";
+    sc.function = shellKillProcess;
+    this.commandList[this.commandList.length] = sc; 
+    
     // processes - list the running processes and their IDs
     // kill <id> - kills the specified process id.
 
@@ -445,8 +459,16 @@ function shellRun(args) {
     krnStartProcess(args[0]);
 }
 
+function shellRunAll(args) {
+    krnStartAllProcesses(args[0]);
+}
+
 function shellCrashAndBurn() {
     _KernelInterruptQueue.enqueue(new Interrupt(OS_ERROR, ""));
+}
+
+function shellKillProcess(args) {
+    krnKillProcess(parseInt(args[0]));
 }
 
 function validateInstructions(program) {
