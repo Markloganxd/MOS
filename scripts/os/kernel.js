@@ -103,10 +103,12 @@ function krnOnCPUClockPulse() {
     // refresh status
     document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
     var html = "<table>";
-    for (var i = 1; i <= 256; i++) {
-        html += "<td>" + _MemoryManager.getByte(i - 1) + "</td>";
-        if (i % 8 === 0) {
-            html += "</tr><tr>";
+    for (var i = 0; i < _MemoryManager.partitions.length; i++) {
+        for (var j = 1; j <= _MemoryManager.partitionSize; j++) {
+            html += "<td>" + _MemoryManager.getByte(_MemoryManager.getPartition(i), j - 1) + "</td>";
+            if (j % 8 === 0) {
+                html += "</tr><tr>";
+            }
         }
     }
     html += "</tr></table>";
@@ -234,6 +236,7 @@ function krnFetchProcess(pid) {
 
 function krnTerminateCurrentProcess() {
     _CPU.isExecuting = false;
+    _MemoryManager.clearPartition(_CurrentProcess.partition);
 }
 
 // register a pcb into the map
@@ -252,27 +255,27 @@ function krnStartProcess(pid) {
 
 function krnCreateProcess(codes) {
     // clear memory in current block
-    _MemoryManager.clearMemory();
-    // TODO get starting address for process (currently just using 0)
-    var startAddress = 0;
-    var currentAddress = startAddress;
+    var partition = _MemoryManager.getFreePartition();
+    if (partition != null) {
+        var currentAddress = 0;
+        
+        // puts codes in memory
+        codes.forEach(function(code) {
+            _MemoryManager.storeByte(partition, currentAddress, code);
+            currentAddress++;
+        });
+        
+        // create pcb
+        var pcb = new ProcessControlBlock();
+        pcb.pid = getNewPid();
+        pcb.partition = partition;
     
-    // puts codes in memory
-    codes.forEach(function(code) {
-        _MemoryManager.storeByte(currentAddress, code);
-        currentAddress++;
-    });
-    
-    // create pcb
-    var pcb = new ProcessControlBlock();
-    pcb.pid = getNewPid();
-    pcb.start = startAddress;
-    pcb.end = 256;
-    
-    // adds to pcb map
-    krnRegisterProcess(pcb.pid, pcb);
-
-    return pcb.pid;
+        // adds to pcb map
+        krnRegisterProcess(pcb.pid, pcb);
+        return pcb.pid;
+    } else {
+        return -1;
+    }
 }
 
 function getNewPid() {

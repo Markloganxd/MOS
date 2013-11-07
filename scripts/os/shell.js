@@ -433,7 +433,11 @@ function shellLoad(args) {
         _StdIn.putText("invalid OP codes: " + program.invalidCodes.join(", "));
     } else {
         var pid = krnCreateProcess(program.validCodes);
-        _StdIn.putText("Process Loaded (pid " + pid + ")");
+        if (pid !== -1) {
+            _StdOut.putText("Process Loaded (pid " + pid + ")");
+        } else {
+            _StdOut.putText("Not enough memory to load process");
+        }
     }
 }
 

@@ -1,7 +1,6 @@
 function ProcessControlBlock() {
     this.pid = 0;
-    this.start = 0;
-    this.end = 0;
+    this.partition = null;
     
     // used for saving state of CPU
     this.PC = 0;     // Program Counter
@@ -12,7 +11,8 @@ function ProcessControlBlock() {
     
     var that = this;
     this.contains = function(address) {
-        return (address >= that.start) && (address < that.end);        
+        var absoluteAddress = that.partition.base + address;
+        return (absoluteAddress >= that.partition.base) && (absoluteAddress < that.partition.limit);        
     }
     this.toString = function(){
         return "pid: " + this.pid + ", PC: " + this.PC + ", Acc: " + this.Acc + ", Xreg: " + this.Xreg + ", Yreg: " + this.Yreg + ", Zflag: " + this.Zflag

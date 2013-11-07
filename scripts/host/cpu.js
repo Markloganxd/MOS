@@ -72,7 +72,7 @@ function Cpu() {
 	
     this.cycle = function() {
         krnTrace("CPU cycle");
-        var opcode = _MemoryManager.getByte(_CPU.PC);
+        var opcode = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
         this.PC++;
         perform(opcode);
     };
@@ -80,7 +80,7 @@ function Cpu() {
 
 function loadAccumulatorWithConstant() {
     // store the decimal value of the data at the program counter into the accumulator
-    _CPU.Acc = hexToDecimal(_MemoryManager.getByte(_CPU.PC));
+    _CPU.Acc = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC));
     console.log("in");   
     // Increment the program counter
     _CPU.PC++; 
@@ -88,9 +88,9 @@ function loadAccumulatorWithConstant() {
 
 function loadAccumulatorFromAddress() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -100,7 +100,7 @@ function loadAccumulatorFromAddress() {
     // check if address is within reach of process
     if (_CurrentProcess.contains(addressInDecimal)) {
         // Place contents of the memory location in the ACC
-        _CPU.Acc = hexToDecimal(_MemoryManager.getByte(addressInDecimal));
+        _CPU.Acc = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
     }
     else {
         // shutdown!
@@ -110,9 +110,9 @@ function loadAccumulatorFromAddress() {
 
 function storeAccumulatorIntoAddress() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -125,7 +125,7 @@ function storeAccumulatorIntoAddress() {
     // store data if address is within reach
     if (_CurrentProcess.contains(addressInDecimal)) {
         var hexForm = decimalToHex(_CPU.Acc);
-        _MemoryManager.storeByte(addressInDecimal, hexForm);
+        _MemoryManager.storeByte(_CurrentProcess.partition, addressInDecimal, hexForm);
     }
     else {
         // shutdown!
@@ -135,9 +135,9 @@ function storeAccumulatorIntoAddress() {
 
 function addWithCarry() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -146,7 +146,7 @@ function addWithCarry() {
     
     // add value of address into acc if address is within reach
     if (_CurrentProcess.contains(addressInDecimal)) {
-        _CPU.Acc += hexToDecimal(_MemoryManager.getByte(addressInDecimal));
+        _CPU.Acc += hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
     }
     else {
         // shutdown!
@@ -156,16 +156,16 @@ function addWithCarry() {
 
 function loadXRegisterWithConstant() {
     // store next byte as constant into x register
-    _CPU.Xreg = hexToDecimal(_MemoryManager.getByte(_CPU.PC));
+    _CPU.Xreg = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC));
     console.log(_CPU.Xreg);
     _CPU.PC++;
 }
 
 function loadXRegisterFromAddress() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -174,7 +174,7 @@ function loadXRegisterFromAddress() {
     
     // load value of address into x register if it's within reach
     if (_CurrentProcess.contains(addressInDecimal)) {
-        _CPU.Xreg = decimalToHex(_MemoryManager.getByte(addressInDecimal));
+        _CPU.Xreg = decimalToHex(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
     }
     else {
         // shutdown!
@@ -184,15 +184,15 @@ function loadXRegisterFromAddress() {
 
 function loadYRegisterWithConstant() {
     // store next byte as constant into y register
-    _CPU.Yreg = _MemoryManager.getByte(_CPU.PC);
+    _CPU.Yreg = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
 }
 
 function loadYRegisterFromAddress() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -201,7 +201,7 @@ function loadYRegisterFromAddress() {
     
     // load value of address into y register if it's within reach
     if (_CurrentProcess.contains(addressInDecimal)) {
-        _CPU.Yreg = decimalToHex(_MemoryManager.getByte(addressInDecimal));
+        _CPU.Yreg = decimalToHex(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
     }
     else {
         // shutdown!
@@ -219,9 +219,9 @@ function sysBreak() {
 
 function compareToXRegister() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -231,7 +231,7 @@ function compareToXRegister() {
     // check if address is within reach of process
     if (_CurrentProcess.contains(addressInDecimal)) {
         // Set z flag if contents of address is equal to x register
-        _CPU.Zflag = (hexToDecimal(_MemoryManager.getByte(addressInDecimal)) === _CPU.Xreg) ? 1 : 0;
+        _CPU.Zflag = (hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal)) === _CPU.Xreg) ? 1 : 0;
     }
     else {
         // shutdown!
@@ -242,7 +242,7 @@ function compareToXRegister() {
 function branchIfNotEqual() {
     if (_CPU.Zflag === 0) {
         // get amount to jump ahead
-        var branchOffset = hexToDecimal(_MemoryManager.getByte(_CPU.PC));
+        var branchOffset = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC));
         _CPU.PC++;
 
         // offset the PC
@@ -259,9 +259,9 @@ function branchIfNotEqual() {
 
 function incrementValueAtAddress() {
     // get the bytes that make up the address (they are stored backwards for some reason)
-    var addressSecondHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressSecondHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
-    var addressFirstHalf = _MemoryManager.getByte(_CPU.PC);
+    var addressFirstHalf = _MemoryManager.getByte(_CurrentProcess.partition, _CPU.PC);
     _CPU.PC++;
     // create the full address
     var address = (addressFirstHalf + addressSecondHalf);
@@ -270,13 +270,13 @@ function incrementValueAtAddress() {
     
     // check if address is within reach of process
     if (_CurrentProcess.contains(addressInDecimal)) {
-        var value = hexToDecimal(_MemoryManager.getByte(addressInDecimal));
+        var value = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
         // increment
         value++;
         // convert back to hex
         var hexValue = decimalToHex(value);
         // store back into memory
-        _MemoryManager.storeByte(addressInDecimal, hexForm);
+        _MemoryManager.storeByte(_CurrentProcess.partition, addressInDecimal, hexForm);
     }
     else {
         // shutdown!
