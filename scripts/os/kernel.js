@@ -151,6 +151,7 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
       krnTimerISR(); // Kernel built-in routine for timers (not the clock).
       break;
     case CONSOLE_OUTPUT_IRQ:
+      console.log('doin it');
       writeToConsole(params);
       break;
     case TERMINATE_PROCESS_IRQ:

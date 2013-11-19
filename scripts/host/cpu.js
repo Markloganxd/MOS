@@ -41,13 +41,15 @@ function Cpu() {
 
   // context switch
   this.switchTo = function(pcb) {
-    this.storeInto(_CurrentProcess);
-    this.PC = pcb.PC;
-    this.Acc = pcb.Acc;
-    this.Xreg = pcb.Xreg;
-    this.Yreg = pcb.Yreg;
-    this.Zflag = pcb.Zflag;
-    _CurrentProcess = pcb;
+    if (pcb !== null) {
+      this.storeInto(_CurrentProcess);
+      this.PC = pcb.PC;
+      this.Acc = pcb.Acc;
+      this.Xreg = pcb.Xreg;
+      this.Yreg = pcb.Yreg;
+      this.Zflag = pcb.Zflag;
+      _CurrentProcess = pcb;
+    }
   };
 
   // perform an operation
@@ -170,7 +172,7 @@ function loadXRegisterFromAddress() {
 
   // load value of address into x register if it's within reach
   if (_CurrentProcess.contains(addressInDecimal)) {
-    _CPU.Xreg = decimalToHex(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
+    _CPU.Xreg = hexToDecimal(_MemoryManager.getByte(_CurrentProcess.partition, addressInDecimal));
   }
   else {
     // shutdown!
@@ -211,7 +213,6 @@ function noOperation() {
 
 function sysBreak() {
   _CPU.storeInto(_CurrentProcess);
-  console.log(_CurrentProcess.toString())
   _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROCESS_IRQ, ""));
 }
 
