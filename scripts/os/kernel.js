@@ -70,8 +70,9 @@ function krnShutdown() {
 }
 
 function krnOnCPUClockPulse() {
-  // call the timer isr here (otherwise the 'else if' clause will never be met)
-  krnTimerISR();
+  //console.log("clockpulse");
+  //console.log("currentProcess: " + _CurrentProcess.pid);
+  //console.log("readyQueueTop: " + _ReadyQueue[0].pid);
 
   // Check for an interrupt, are any. Page 560
   if (_KernelInterruptQueue.getSize() > 0) {
@@ -80,46 +81,13 @@ function krnOnCPUClockPulse() {
     krnInterruptHandler(interrupt.irq, interrupt.params);
   } else if (_ReadyQueue.length > 0) {
     // run a cpu cycle
+    updateScheduler();
     _CPU.cycle(); 
   } else {
     // krnTrace("Idle");
   }
-  // refresh status
-  document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
-
-  // refresh memory
-  var html = "<table><tr id=\'partition1\'>";
-  for (var i = 0; i < _MemoryManager.partitions.length; i++) {
-    for (var j = 1; j <= _MemoryManager.partitionSize; j++) {
-      html += "<td>" + _MemoryManager.getByte(_MemoryManager.getPartition(i), j - 1) + "</td>";
-      if (j % 8 === 0) {
-        html += "</tr><tr id=\'partition" + (i + 1) + "\'>";
-      }
-    }
-  }
-  // refresh cpu data
-  html += "</tr></table>";
-  document.getElementById("memory").innerHTML = html;
-  document.getElementById("Accumulator").innerHTML = _CPU.Acc;
-  document.getElementById("PC").innerHTML = _CPU.PC;
-  document.getElementById("Xregister").innerHTML = _CPU.Xreg;
-  document.getElementById("Yregister").innerHTML = _CPU.Yreg;
-  document.getElementById("Zflag").innerHTML = _CPU.Zflag;
-
-  // refresh ready queue
-  for (var i = 0; i < _MemoryManager.partitions.length; i++) {
-    if (i < _ReadyQueue.length) {
-      document.getElementById("pid" + i).innerHTML = _ReadyQueue[i].pid;
-      document.getElementById("state" + i).innerHTML = _ReadyQueue[i].state;
-      document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
-      document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
-    } else {
-      document.getElementById("pid" + i).innerHTML = "-";
-      document.getElementById("state" + i).innerHTML = "-";
-      document.getElementById("base" + i).innerHTML = "-";
-      document.getElementById("limit" + i).innerHTML = "-";
-    }
-  }
+  // call the timer isr here (otherwise the 'else if' clause will never be met)
+  //krnTimerISR();
 }
 
 // 
@@ -148,14 +116,13 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
   //       Maybe the hardware simulation will grow to support/require that in the future.
   switch (irq) {
     case TIMER_IRQ:
-      krnTimerISR(); // Kernel built-in routine for timers (not the clock).
+      krnTimerISR(params); // Kernel built-in routine for timers (not the clock).
       break;
     case CONSOLE_OUTPUT_IRQ:
-      console.log('doin it');
       writeToConsole(params);
       break;
     case TERMINATE_PROCESS_IRQ:
-      krnTerminateCurrentProcess();
+      krnKillProcess(params);
       break;
     case KEYBOARD_IRQ:
       // no keys are handled if the console isn't active
@@ -166,6 +133,11 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
       break;
     case CONTEXT_SWITCH_IRQ:
       _CPU.switchTo(krnFetchProcess(params));
+      // position the new current process as the first in ready queue
+      while (_ReadyQueue[0].pid !== _CurrentProcess.pid) {
+        _ReadyQueue.push(_ReadyQueue.shift());
+      }
+      SCHEDULER_COUNT = 0;
       hostLog("Changing context to process " + params + ".");
       break;
     case OS_ERROR:
@@ -185,20 +157,22 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
   }
 }
 
-function krnTimerISR() // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver).
+function krnTimerISR(params) // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver).
 {
+  _ReadyQueue.push(_CurrentProcess);
+  _ReadyQueue.shift()
+  _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+}
+
+function updateScheduler() {
   // Check multiprogramming parameters and enforce quanta here. Call the scheduler / context switch here if necessary.
-  if (SCHEDULER_COUNT > SCHEDULER_QUANTUM && _CurrentProcess != null) {
+  if (SCHEDULER_COUNT >= SCHEDULER_QUANTUM - 1 && _CurrentProcess != null) {
   // switch process if the time quantum has expired
-    _ReadyQueue.push(_CurrentProcess);
-    _ReadyQueue.shift()
-    _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+    _KernelInterruptQueue.enqueue(new Interrupt(TIMER_IRQ, ""));
     hostLog("Scheduler Quantum reached. ");
-    SCHEDULER_COUNT = 0;
   }
   SCHEDULER_COUNT++;
 }
-
 
 //
 // System Calls... that generate software interrupts via tha Application Programming Interface library routines.
@@ -257,26 +231,37 @@ function krnFetchProcess(pid) {
   }
 }
 
-function krnTerminateCurrentProcess() {
-  //_CPU.isExecuting = false;
-  _StdOut.putText("Process finished. State of PCB: ")
-  _StdOut.advanceLine();
-  _StdOut.putText(_CurrentProcess.toString());
-  _StdOut.advanceLine();
+//function krnTerminateCurrentProcess() {
+  ////_CPU.isExecuting = false;
 
-  _MemoryManager.clearPartition(_CurrentProcess.partition);
-  _ReadyQueue.shift();
-  delete _Residents[_CurrentProcess.pid];
-  if (_ReadyQueue.length === 0) {
-    _CurrentProcess = null;
-  } else {
-    _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
-    SCHEDULER_COUNT = 0;
-  }
-  //_CPU.isExecuting = false;
-}
+  //_MemoryManager.clearPartition(_CurrentProcess.partition);
+  //console.log("removing process " + _CurrentProcess.pid + " from ready queue of size: " + _ReadyQueue.length);
+  //console.log("before: ");
+  //for (var i = 0; i < _ReadyQueue.length; i++) {
+    //console.log(_ReadyQueue[i].toString());
+  //}
+  //_ReadyQueue.shift();
+  //console.log("after: ");
+  //for (var i = 0; i < _ReadyQueue.length; i++) {
+    //console.log(_ReadyQueue[i].toString());
+  //}
+  //// remove from residents list
+  //delete _Residents[_CurrentProcess.pid];
+  //if (_ReadyQueue.length === 0) {
+    //_CurrentProcess = null;
+  //} else {
+    //_KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+  //}
+  ////_CPU.isExecuting = false;
+//}
 
 function krnKillProcess(pid) {
+  // print death message
+  _StdOut.putText("Process finished. State of PCB: ")
+  _StdOut.advanceLine();
+  _StdOut.putText(_Residents[pid].toString());
+  _StdOut.advanceLine();
+
   // see if the pid is in the ready queue
   var index = -1;
   for (var i = 0; i < _ReadyQueue.length; i++) {
@@ -288,7 +273,7 @@ function krnKillProcess(pid) {
   // if it is, then kill it 
   if (index !== -1) {
     _ReadyQueue.splice(index, index + 1);
-    // switch the context if the killed process with currently active
+    // switch the context if the killed process is currently active
     if (index === 0 && _ReadyQueue.length > 0) {
       _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
     } else if (_ReadyQueue.length === 0) {

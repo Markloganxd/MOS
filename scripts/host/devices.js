@@ -26,6 +26,9 @@ function hostClockPulse()
    _OSclock++;
    // Call the kernel clock pulse event handler.
    krnOnCPUClockPulse();
+
+   // refresh the view of our operating system components
+   refreshDisplay();
 }
 
 
@@ -58,3 +61,43 @@ function hostOnKeypress(event)
         _KernelInterruptQueue.enqueue( new Interrupt(KEYBOARD_IRQ, params) );
     }
 }
+
+function refreshDisplay() {
+  // refresh status
+  document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
+
+  // refresh memory
+  var html = "<table><tr id=\'partition1\'>";
+  for (var i = 0; i < _MemoryManager.partitions.length; i++) {
+    for (var j = 1; j <= _MemoryManager.partitionSize; j++) {
+      html += "<td>" + _MemoryManager.getByte(_MemoryManager.getPartition(i), j - 1) + "</td>";
+      if (j % 8 === 0) {
+        html += "</tr><tr id=\'partition" + (i + 1) + "\'>";
+      }
+    }
+  }
+  // refresh cpu data
+  html += "</tr></table>";
+  document.getElementById("memory").innerHTML = html;
+  document.getElementById("Accumulator").innerHTML = _CPU.Acc;
+  document.getElementById("PC").innerHTML = _CPU.PC;
+  document.getElementById("Xregister").innerHTML = _CPU.Xreg;
+  document.getElementById("Yregister").innerHTML = _CPU.Yreg;
+  document.getElementById("Zflag").innerHTML = _CPU.Zflag;
+
+  // refresh ready queue
+  for (var i = 0; i < _MemoryManager.partitions.length; i++) {
+    if (i < _ReadyQueue.length) {
+      document.getElementById("pid" + i).innerHTML = _ReadyQueue[i].pid;
+      document.getElementById("state" + i).innerHTML = _ReadyQueue[i].state;
+      document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
+      document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
+    } else {
+      document.getElementById("pid" + i).innerHTML = "-";
+      document.getElementById("state" + i).innerHTML = "-";
+      document.getElementById("base" + i).innerHTML = "-";
+      document.getElementById("limit" + i).innerHTML = "-";
+    }
+  }
+}
+

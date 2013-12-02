@@ -213,7 +213,7 @@ function noOperation() {
 
 function sysBreak() {
   _CPU.storeInto(_CurrentProcess);
-  _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROCESS_IRQ, ""));
+  _KernelInterruptQueue.enqueue(new Interrupt(TERMINATE_PROCESS_IRQ, _CurrentProcess.pid));
 }
 
 function compareToXRegister() {
