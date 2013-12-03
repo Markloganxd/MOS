@@ -51,6 +51,10 @@ function krnBootstrap() // Page 8.
   krnTrace("Creating and Launching the shell.");
   _OsShell = new Shell();
   _OsShell.init();
+  formatFileSystem();
+  createFile("Imdabest");
+  writeToFile("Imdabest", "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+  
   // Finally, initiate testing.
   if (_GLaDOS) {
     _GLaDOS.afterStartup();

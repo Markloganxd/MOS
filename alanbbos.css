@@ -43,6 +43,19 @@ h3 {
 #cpu {
   width: 200px;
 }
+#readyqueue {
+  float:left;
+}
+#filesystem {
+  float:left;
+  height: 400px;
+  width: 300px;
+  overflow: auto;
+}
+#filesystem table td {
+  font-size: 8pt;
+  text-align: left;
+}
 #memory {
   float:left;
   height: 400px;

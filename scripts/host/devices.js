@@ -67,7 +67,8 @@ function refreshDisplay() {
   document.getElementById("status").innerHTML = "Status: " + _OsStatus + "  --  " + new Date();
 
   // refresh memory
-  var html = "<table><tr id=\'partition1\'>";
+  var html = "<h3>Memory</h3>";
+  html += "<table><tr id=\'partition1\'>";
   for (var i = 0; i < _MemoryManager.partitions.length; i++) {
     for (var j = 1; j <= _MemoryManager.partitionSize; j++) {
       html += "<td>" + _MemoryManager.getByte(_MemoryManager.getPartition(i), j - 1) + "</td>";
@@ -76,9 +77,10 @@ function refreshDisplay() {
       }
     }
   }
-  // refresh cpu data
   html += "</tr></table>";
   document.getElementById("memory").innerHTML = html;
+
+  // refresh cpu data
   document.getElementById("Accumulator").innerHTML = _CPU.Acc;
   document.getElementById("PC").innerHTML = _CPU.PC;
   document.getElementById("Xregister").innerHTML = _CPU.Xreg;
@@ -99,5 +101,21 @@ function refreshDisplay() {
       document.getElementById("limit" + i).innerHTML = "-";
     }
   }
+
+  // refresh file system
+  html = "<h3>File System</h3>";
+  html += "<table>";
+  for (var track = 0; track < 4; track++) {
+    for (var sector = 0; sector < 8; sector++) {
+      for (var block = 0; block < 8; block++) {
+        html += "<tr>";
+        html += "<td>" + track + "" + sector + "" + block + "</td>";
+        html += "<td>" + new TSB(track + "" + sector + "" + block).toString() + "</td>";
+        html += "</tr>";
+      }
+    }
+  }
+  html += "</table>";
+  document.getElementById("filesystem").innerHTML = html;
 }
 

@@ -32,11 +32,13 @@ function Cpu() {
 
   // store the state of the cpu into pcb
   this.storeInto = function(pcb) {
-    pcb.PC = this.PC;  
-    pcb.Acc = this.Acc;
-    pcb.Xreg = this.Xreg;  
-    pcb.Yreg = this.Yreg;  
-    pcb.Zflag = this.Zflag;  
+    if (pcb !== null) {
+      pcb.PC = this.PC;  
+      pcb.Acc = this.Acc;
+      pcb.Xreg = this.Xreg;  
+      pcb.Yreg = this.Yreg;  
+      pcb.Zflag = this.Zflag;  
+    }
   };
 
   // context switch
