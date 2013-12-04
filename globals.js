@@ -41,9 +41,6 @@ var _MemoryManager = null;
 
 var _CurrentProcess = null;
 
-// process statuses
-var RUNNING = 0;
-
 var _Canvas = null;               // Initialized in hostInit().
 var _DrawingContext = null;       // Initialized in hostInit().
 var _DefaultFontFamily = "sans";  // Ignored, I think. The was just a place-holder in 2008, but the HTML canvas may have use for it.
@@ -76,6 +73,7 @@ var _SarcasticMode = false;
 
 // Global Device Driver Objects - page 12
 var krnKeyboardDriver = null;
+var krnFileSystemDriver = null;
 
 // PID incrementer 
 var PID_INCREMENTER = 0;

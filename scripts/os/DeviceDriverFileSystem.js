@@ -3,154 +3,145 @@ DeviceDriverFileSystem.prototype = new DeviceDriver; // "Inherit" from prototype
 
 function DeviceDriverFileSystem() // Add or override specific attributes and method pointers.
 {
-    // "subclass"-specific attributes.
-    // this.buffer = "";    // TODO: Do we need this?
-    // Override the base method pointers.
     this.driverEntry = krnFileSystemDriverEntry;
-    this.isr = doFileStuff;//TODO
-    // "Constructor" code.
-}
 
-function doFileStuff(params) {
-  var action = params[0];
-  var filename = params[1];
-}
+  function krnFileSystemDriverEntry() {
+      // Initialization routine for this, the kernel-mode file system Device Driver.
+      this.status = "loaded";
+  }
 
-function krnFileSystemDriverEntry() {
-    // Initialization routine for this, the kernel-mode file system Device Driver.
-    this.status = "loaded";
-}
-
-function formatFileSystem() {
-  for (var track = 0; track < 4; track++) {
-    for (var sector = 0; sector < 8; sector++) {
-      for (var block = 0; block < 8; block++) {
-        if (track + "" + sector + "" + block === "000") {
-          localStorage[track + "" + sector + "" + block] = "SPECIAL";
-        } else {
-          localStorage[track + "" + sector + "" + block] = "0000~";
-          var tsb = new TSB(track + "" + sector + "" + block);
-          tsb.clear();
+  this.formatFileSystem = function() {
+    for (var track = 0; track < 4; track++) {
+      for (var sector = 0; sector < 8; sector++) {
+        for (var block = 0; block < 8; block++) {
+          if (track + "" + sector + "" + block === "000") {
+            localStorage[track + "" + sector + "" + block] = "SPECIAL";
+          } else {
+            localStorage[track + "" + sector + "" + block] = "0000~";
+            var tsb = new TSB(track + "" + sector + "" + block);
+            tsb.clear();
+          }
         }
       }
     }
   }
-}
 
-function createFile(filename) {
-  var directory = claimFreeDirectory();
-  if (directory !== null) {
-    var croppedName = filename.slice(0, Math.min(filename.length, 60));
-    directory.write(croppedName);
-    var data = claimFreeBlock();
-    if (data !== null) {
-      directory.linkTo(data);
+  this.createFile = function(filename) {
+    var directory = claimFreeDirectory();
+    if (directory !== null) {
+      var croppedName = filename.slice(0, Math.min(filename.length, 60));
+      directory.write(croppedName);
+      var data = claimFreeBlock();
+      if (data !== null) {
+        directory.linkTo(data);
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+        return false;
+    }
+  }
+
+  this.deleteFile = function(filename) {
+    var tsb = this.findDirectory(filename);
+    if (tsb !== null) {
+      var nextTSB = tsb.getLinkedTSB();
+      tsb.clear();
+      var currentTSB = nextTSB;
+
+      // delete all links
+      do {
+        nextTSB = currentTSB.getLinkedTSB();
+        currentTSB.clear();
+        currentTSB = nextTSB;
+      } while (currentTSB !== null);
+
+      return 1;
+    } else {
+      console.log("couldn't find");
+      //TODO throw error
+      return -1;
+    }
+  }
+
+  this.writeToFile = function(filename, contents) {
+    var segmentCount = Math.ceil(contents.length / 60);
+    var segments = [];
+    for (var i = 0; i < segmentCount; i++) {
+      segmentEnd = Math.min((i+1)*60, contents.length);
+      segments.push(contents.slice(i*60, segmentEnd));
+    }
+    
+    var tsb = this.findDirectory(filename);
+    if (tsb !== null) {
+      var currentTSB = tsb.getLinkedTSB();
+      for (var i = 0; i < segments.length; i++) {
+        // write data
+        currentTSB.write(segments[i]); 
+        // if there is remaining data, make a new block and link it to current one
+        if (segments.length - 1 > i) { 
+          linkedTSB = claimFreeBlock();
+          currentTSB.linkTo(linkedTSB);
+          currentTSB = linkedTSB;
+        }
+      }
+      // return success
       return true;
     } else {
+      //TODO throw error
       return false;
     }
-  } else {
-      return false;
   }
-}
 
-function deleteFile(filename) {
-  var tsb = findDirectory(filename);
-  if (tsb !== null) {
-    var nextTSB = tsb.getLinkedTSB();
-    tsb.clear();
-    var currentTSB = nextTSB;
+  this.readFromFile = function(filename) {
+    var tsb = this.findDirectory(filename);
+    if (tsb !== null) {
+      var contents = "";
+      var currentTSB = tsb.getLinkedTSB();
 
-    // delete all links
-    do {
-      nextTSB = currentTSB.getLinkedTSB();
-      currentTSB.clear();
-      currentTSB = nextTSB;
-    } while (currentTSB !== null);
+      // aggregate contents
+      do {
+        contents += currentTSB.getContents();
+        currentTSB = currentTSB.getLinkedTSB();
+      } while (currentTSB !== null);
 
-    return 1;
-  } else {
-    console.log("couldn't find");
-    //TODO throw error
-    return -1;
+      // return aggregated contents
+      return contents;
+    } else {
+      console.log("couldn't find");
+      //TODO throw error
+      return "";
+    }
   }
-}
 
-function writeToFile(filename, contents) {
-  var segmentCount = Math.ceil(contents.length / 60);
-  var segments = [];
-  for (var i = 0; i < segmentCount; i++) {
-    segmentEnd = Math.min((i+1)*60, contents.length);
-    segments.push(contents.slice(i*60, segmentEnd));
-  }
-  
-  var tsb = findDirectory(filename);
-  if (tsb !== null) {
-    var currentTSB = tsb.getLinkedTSB();
-    for (var i = 0; i < segments.length; i++) {
-      // write data
-      currentTSB.write(segments[i]); 
-      // if there is remaining data, make a new block and link it to current one
-      if (segments.length - 1 > i) { 
-        linkedTSB = claimFreeBlock();
-        currentTSB.linkTo(linkedTSB);
-        currentTSB = linkedTSB;
+  this.getAllFilenames = function() {
+    var names = [];
+    var track = 0;
+    for (var sector = 0; sector < 8; sector++) {
+      for (var block = 0; block < 8; block++) {
+        var tsb = new TSB(track + "" + sector + "" + block);
+        if (tsb.isClaimed()) {
+          names.push(tsb.getContents());
+        }
       }
     }
-    // return success
-    return true;
-  } else {
-    //TODO throw error
-    return false;
+    return names;
   }
-}
 
-function readFromFile(filename) {
-  var tsb = findDirectory(filename);
-  if (tsb !== null) {
-    var contents = "";
-    var currentTSB = tsb.getLinkedTSB();
-
-    // aggregate contents
-    do {
-      contents += currentTSB.getContents();
-      currentTSB = currentTSB.getLinkedTSB();
-    } while (currentTSB !== null);
-
-    // return aggregated contents
-    return contents;
-  } else {
-    console.log("couldn't find");
-    //TODO throw error
-    return "";
-  }
-}
-function getAllFilenames() {
-  var names = [];
-  var track = 0;
-  for (var sector = 0; sector < 8; sector++) {
-    for (var block = 0; block < 8; block++) {
-      var tsb = new TSB(track + "" + sector + "" + block);
-      if (tsb.isClaimed()) {
-        names.push(tsb.getContents());
+  this.findDirectory = function(name) {
+    var track = 0;
+    for (var sector = 0; sector < 8; sector++) {
+      for (var block = 0; block < 8; block++) {
+        var tsb = new TSB(track + "" + sector + "" + block);
+        if (tsb.isClaimed() && tsb.getContents() === name) {
+          return tsb;
+        } else if (tsb.isClaimed()){
+        } 
       }
     }
+    return null;
   }
-  return names;
-}
-
-function findDirectory(name) {
-  var track = 0;
-  for (var sector = 0; sector < 8; sector++) {
-    for (var block = 0; block < 8; block++) {
-      var tsb = new TSB(track + "" + sector + "" + block);
-      if (tsb.isClaimed() && tsb.getContents() === name) {
-        return tsb;
-      } else if (tsb.isClaimed()){
-      } 
-    }
-  }
-  return null;
 }
 
 function claimFreeDirectory() {
@@ -255,7 +246,7 @@ function TSB(id) {
         }
         return string;
       } else {
-        return "SPECIAL THING";
+        return "MBR";
       }
     }
 }

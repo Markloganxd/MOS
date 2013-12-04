@@ -95,18 +95,20 @@ function refreshDisplay() {
       if (_ReadyQueue[i].partition !== null) {
         document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
       } else {
-        document.getElementById("base" + i).innerHTML = "mem";
+        document.getElementById("base" + i).innerHTML = "FIL";
       }
       if (_ReadyQueue[i].partition !== null) {
         document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
       } else {
-        document.getElementById("limit" + i).innerHTML = "mem";
+        document.getElementById("limit" + i).innerHTML = "FIL";
       }
+      document.getElementById("priority" + i).innerHTML = _ReadyQueue[i].priority;
     } else {
       document.getElementById("pid" + i).innerHTML = "-";
       document.getElementById("state" + i).innerHTML = "-";
       document.getElementById("base" + i).innerHTML = "-";
       document.getElementById("limit" + i).innerHTML = "-";
+      document.getElementById("priority" + i).innerHTML = "-";
     }
   }
 

@@ -37,9 +37,11 @@ function krnBootstrap() // Page 8.
   krnKeyboardDriver.driverEntry(); // Call the driverEntry() initialization routine.
   krnTrace(krnKeyboardDriver.status);
 
-  //
-  // ... more?
-  //
+  // Load the FileSystem Device Driver
+  krnTrace("Loading the Filesystem device driver.");
+  krnFileSystemDriver = new DeviceDriverFileSystem(); // Construct it.  TODO: Should that have a _global-style name?
+  krnFileSystemDriver.driverEntry(); // Call the driverEntry() initialization routine.
+  krnTrace(krnFileSystemDriver.status);
 
   // Enable the OS Interrupts.  (Not the CPU clock interrupt, as that is done in the hardware sim.)
   krnTrace("Enabling the interrupts.");
@@ -51,9 +53,7 @@ function krnBootstrap() // Page 8.
   krnTrace("Creating and Launching the shell.");
   _OsShell = new Shell();
   _OsShell.init();
-  formatFileSystem();
-  createFile("Imdabest");
-  writeToFile("Imdabest", "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+  krnFileSystemDriver.formatFileSystem();
   
   // Finally, initiate testing.
   if (_GLaDOS) {
@@ -109,6 +109,38 @@ function krnDisableInterrupts() {
   // Put more here.
 }
 
+function getLeastImportantProcess() {
+  if (SCHEDULER_TYPE === "priority") {
+    // get least priority process
+    var lowestProcess = _ReadyQueue[0];
+    for (var i = 0; i < _ReadyQueue.length; i++) {
+      if (_ReadyQueue[i].partition !== null && _ReadyQueue[i].priority < lowestProcess.priority) {
+        lowestProcess = _ReadyQueue[i];
+      }
+    }
+    return lowestProcess;
+  } else {
+    // get last partition-using process
+    var lastProcess = _ReadyQueue[0];
+    for (var i = 0; i < _ReadyQueue.length; i++) {
+      if (_ReadyQueue[i].partition !== null) {
+        lastProcess = _ReadyQueue[i];
+      }
+    }
+    return lastProcess;
+  }
+  return null;
+}
+
+function krnGetProcessInPartition(partition) {
+  for (var i = 0; i < _ReadyQueue.length; i++) {
+    if (_ReadyQueue[i].partition === partition) {
+      return _ReadyQueue[i];
+    }
+  }
+  return null;
+}
+
 function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routine.  Pages 8 and 560.
 {
   // Trace our entrance here so we can compute Interrupt Latency by analyzing the log file later on.  Page 766.
@@ -144,7 +176,7 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
           if (partition !== null) {
             _MemoryManager.rollIn(process, partition);
           } else {
-            var swappedProcess = _ReadyQueue[_ReadyQueue.length - 1];
+            var swappedProcess = getLeastImportantProcess();
             var emptyPartition = swappedProcess.partition;
             _MemoryManager.rollOut(swappedProcess);
             _MemoryManager.rollIn(process, emptyPartition);
@@ -178,16 +210,24 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
 function krnTimerISR(params) // The built-in TIMER (not clock) Interrupt Service Routine (as opposed to an ISR coming from a device driver).
 {
   _ReadyQueue.push(_CurrentProcess);
-  _ReadyQueue.shift()
-  _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+  _ReadyQueue.shift();
+  if (_CurrentProcess !== _ReadyQueue[0]) {
+    _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+  }
 }
 
 function updateScheduler() {
   // Check multiprogramming parameters and enforce quanta here. Call the scheduler / context switch here if necessary.
-  if (SCHEDULER_COUNT >= SCHEDULER_QUANTUM - 1 && _CurrentProcess != null) {
-  // switch process if the time quantum has expired
-    _KernelInterruptQueue.enqueue(new Interrupt(TIMER_IRQ, ""));
-    hostLog("Scheduler Quantum reached. ");
+  if (SCHEDULER_TYPE === "rr") {
+    if (SCHEDULER_COUNT >= SCHEDULER_QUANTUM - 1 && _CurrentProcess != null) {
+      // switch process if the time quantum has expired
+      _KernelInterruptQueue.enqueue(new Interrupt(TIMER_IRQ, ""));
+      hostLog("Scheduler Quantum reached. ");
+    }
+  } else if (SCHEDULER_TYPE === "fcfs") {
+    // do nothing
+  } else if (SCHEDULER_TYPE === "priority") {
+    // do nothing
   }
   SCHEDULER_COUNT++;
 }
@@ -272,7 +312,21 @@ function krnFetchProcess(pid) {
   //}
   ////_CPU.isExecuting = false;
 //}
-
+function getNextRunningProcess() {
+  if (SCHEDULER_TYPE === "rr") {
+    return _ReadyQueue[0];
+  } else if (SCHEDULER_TYPE === "fcfs") {
+    return _ReadyQueue[0];
+  } else if (SCHEDULER_TYPE === "priority") {
+    var priorityPcb = _ReadyQueue[0];
+    for (var i = 0; i < _ReadyQueue.length; i++) {
+      if (priorityPcb.priority < _ReadyQueue[i].priority) {
+        priorityPcb = _ReadyQueue[i];
+      }
+    }
+    return priorityPcb;
+  }
+}
 function krnKillProcess(pid) {
   // see if the pid is in the ready queue
   var index = -1;
@@ -284,6 +338,7 @@ function krnKillProcess(pid) {
 
   // if it is, then kill it 
   if (index !== -1) {
+    _ReadyQueue[index].state = "Dead";
     // print death message
     _StdOut.putText("Process finished. State of PCB: ")
     _StdOut.advanceLine();
@@ -293,8 +348,8 @@ function krnKillProcess(pid) {
     // clear the memory or file containing process
     if (_ReadyQueue[index].partition !== null) {
       _MemoryManager.clearPartition(_ReadyQueue[index].partition);
-    } else if (findDirectory("_process_" + pid) !== null) {
-      deleteFile("_process_" + pid);
+    } else if (krnFileSystemDriver.findDirectory("_process_" + pid) !== null) {
+      krnFileSystemDriver.deleteFile("_process_" + pid);
     }
     // remove the process from Ready Queue
     _ReadyQueue.splice(index, 1);
@@ -303,7 +358,8 @@ function krnKillProcess(pid) {
 
     // switch the context if the killed process is currently active
     if (index === 0 && _ReadyQueue.length > 0) {
-      _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+      krnUpdateProcessOrder();
+      //_KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
     } else if (_ReadyQueue.length === 0) {
       _CurrentProcess = null;
     } else {
@@ -319,10 +375,26 @@ function krnRegisterProcess(pid, pcb) {
 function krnStartProcess(pid) {
   var process = krnFetchProcess(pid);
   if (process !== null) {
+    process.state = "Waiting";
     _ReadyQueue.push(process);
+    // only reassign the running process if none are running currently
     if (_CurrentProcess === null) {
-      _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
+      krnUpdateProcessOrder();
     }
+  }
+}
+
+function krnUpdateProcessOrder() {
+  if (SCHEDULER_TYPE === "priority") {
+    _ReadyQueue = _ReadyQueue.sort(function(a, b) {
+      if (a.priority < b.priority) return 1;
+      else if (a.priority > b.priority) return -1;
+      else return 0;
+    });
+  }
+  if (_CurrentProcess !== nextProcess && _ReadyQueue.length > 0) {
+    var nextProcess = _ReadyQueue[0];
+    _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, nextProcess.pid));
   }
 }
 
@@ -334,10 +406,12 @@ function krnStartAllProcesses(pid) {
   }
 }
 
-function krnCreateProcess(codes) {
+function krnCreateProcess(codes, priority) {
   // create pcb
   var pcb = new ProcessControlBlock();
   pcb.pid = getNewPid();
+  pcb.priority = priority;
+
   // adds to pcb map
   krnRegisterProcess(pcb.pid, pcb);
 
@@ -359,8 +433,8 @@ function krnCreateProcess(codes) {
     pcb.partition = null;
     
     // put into filesystem
-    createFile("_process_" + pcb.pid);
-    writeToFile("_process_" + pcb.pid, codes.join(" "));
+    krnFileSystemDriver.createFile("_process_" + pcb.pid);
+    krnFileSystemDriver.writeToFile("_process_" + pcb.pid, codes.join(" "));
   }
   return pcb.pid;
 }

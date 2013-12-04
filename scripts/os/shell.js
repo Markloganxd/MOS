@@ -210,14 +210,14 @@ function shellInit() {
     // set the current scheduling type
     sc = new ShellCommand();
     sc.command = "setschedule";
-    sc.description = " - set the current scheduling type: [rr, fcfs, priority]";
+    sc.description = " - set the scheduling type: [rr, fcfs, priority]";
     sc.function = shellSetSchedule;
     this.commandList[this.commandList.length] = sc; 
 
     // get the current scheduling type
     sc = new ShellCommand();
     sc.command = "getschedule";
-    sc.description = " - get the current scheduling type: [rr, fcfs, priority]";
+    sc.description = " - get the current scheduling type";
     sc.function = shellGetSchedule;
     this.commandList[this.commandList.length] = sc; 
 
@@ -373,7 +373,9 @@ function shellInvalidCommand() {
         _StdIn.putText("Duh. Go back to your Speak & Spell.");
     }
     else {
-        _StdIn.putText("Type 'help' for, well... help.");
+        _StdIn.putText("Commands are case sensitive.");
+        _StdIn.advanceLine();
+        _StdIn.putText("Type help for options.");
     }
 }
 
@@ -453,13 +455,9 @@ function shellDiffuseBomb() {
 }
 
 function shellSetQuantum(params) {
-  var schedule = params[0];
-  if (schedule === "rr" || schedule === "fcfs" || schedule === "priority") {
-    SCHEDULER_QUANTUM = params[0];
-  } else {
-    _StdIn.putText("Not a valid scheduler.");
-    _StdIn.advanceLine();
-  }
+  SCHEDULER_QUANTUM = params[0];
+  _StdIn.putText("Quantum set.");
+  _StdIn.advanceLine();
 }
 
 function shellListProcesses(params) {
@@ -472,13 +470,13 @@ function shellListProcesses(params) {
 
 function shellCreateFile(params) {
   var filename = params[0];
-  createFile(filename);
+  krnFileSystemDriver.createFile(filename);
 }
 
 function shellReadFile(params) {
   var filename = params[0];
-  if (findDirectory(filename) !== null) {
-    var contents = readFromFile(filename);
+  if (krnFileSystemDriver.findDirectory(filename) !== null) {
+    var contents = krnFileSystemDriver.readFromFile(filename);
     _StdIn.putText(contents);
     _StdIn.advanceLine();
   } else {
@@ -490,8 +488,8 @@ function shellReadFile(params) {
 function shellWriteToFile(params) {
   var filename = params[0];
   var contents = params.slice(1).join(" ");
-  if (findDirectory(filename) !== null) {
-    writeToFile(filename, contents);
+  if (krnFileSystemDriver.findDirectory(filename) !== null) {
+    krnFileSystemDriver.writeToFile(filename, contents);
     _StdIn.putText("file written.");
     _StdIn.advanceLine();
   } else {
@@ -502,8 +500,8 @@ function shellWriteToFile(params) {
 
 function shellDeleteFile(params) {
   var filename = params[0];
-  if (findDirectory(filename) !== null) {
-    deleteFile(filename);
+  if (krnFileSystemDriver.findDirectory(filename) !== null) {
+    krnFileSystemDriver.deleteFile(filename);
     _StdIn.putText("file removed.");
     _StdIn.advanceLine();
   } else {
@@ -513,7 +511,7 @@ function shellDeleteFile(params) {
 }
 
 function shellListFiles(params) {
-  var files = getAllFilenames();
+  var files = krnFileSystemDriver.getAllFilenames();
   for (var i = 0; i < files.length; i++) {
     console.log(files[i]);
     _StdIn.putText(files[i] + " ");
@@ -522,7 +520,7 @@ function shellListFiles(params) {
 }
 
 function shellFormatFileSystem(params) {
-  formatFileSystem();
+  krnFileSystemDriver.formatFileSystem();
   _StdIn.putText("file system reformatted.");
   _StdIn.advanceLine();
 }
@@ -531,6 +529,7 @@ function shellSetSchedule(params) {
   var schedule = params[0];
   if (schedule === "rr" || schedule === "fcfs" || schedule === "priority") {
     SCHEDULER_TYPE = schedule;
+    krnUpdateProcessOrder();
     _StdIn.putText("schedule type set.");
     _StdIn.advanceLine();
   } else {
@@ -599,12 +598,16 @@ function shellChangeStatus(args) {
 }
 
 function shellLoad(args) {
+    var priority = 0;
+    if (args.length > 0) {
+      priority = args[0];
+    }
     var input = document.getElementById("taProgramInput").value;
     var program = validateInstructions(input);
     if (program.invalidCodes.length > 0) {
         _StdIn.putText("invalid OP codes: " + program.invalidCodes.join(", "));
     } else {
-        var pid = krnCreateProcess(program.validCodes);
+        var pid = krnCreateProcess(program.validCodes, priority);
         if (pid !== -1) {
             _StdOut.putText("Process Loaded (pid " + pid + ")");
         } else {

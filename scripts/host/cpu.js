@@ -44,6 +44,9 @@ function Cpu() {
   // context switch
   this.switchTo = function(pcb) {
     if (pcb !== null) {
+      if (_CurrentProcess !== null) {
+        _CurrentProcess.state = "Waiting";
+      }
       this.storeInto(_CurrentProcess);
       this.PC = pcb.PC;
       this.Acc = pcb.Acc;
@@ -51,6 +54,7 @@ function Cpu() {
       this.Yreg = pcb.Yreg;
       this.Zflag = pcb.Zflag;
       _CurrentProcess = pcb;
+      _CurrentProcess.state = "Running";
     }
   };
 
