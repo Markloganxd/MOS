@@ -470,7 +470,13 @@ function shellListProcesses(params) {
 
 function shellCreateFile(params) {
   var filename = params[0];
-  krnFileSystemDriver.createFile(filename);
+  if (krnFileSystemDriver.findDirectory(filename) === null) {
+    krnFileSystemDriver.createFile(filename);
+    _StdIn.putText("File created.");
+  } else {
+    _StdIn.putText("File already exists.");
+  }
+  _StdIn.advanceLine();
 }
 
 function shellReadFile(params) {
@@ -501,7 +507,8 @@ function shellWriteToFile(params) {
 function shellDeleteFile(params) {
   var filename = params[0];
   if (krnFileSystemDriver.findDirectory(filename) !== null) {
-    krnFileSystemDriver.deleteFile(filename);
+    //krnFileSystemDriver.deleteFile(filename);
+    krnFileSystemDriver.clearFile(filename);
     _StdIn.putText("file removed.");
     _StdIn.advanceLine();
   } else {
@@ -520,8 +527,11 @@ function shellListFiles(params) {
 }
 
 function shellFormatFileSystem(params) {
-  krnFileSystemDriver.formatFileSystem();
-  _StdIn.putText("file system reformatted.");
+  if (krnFileSystemDriver.formatFileSystem()) {
+    _StdIn.putText("file system reformatted.");
+  } else {
+    _StdIn.putText("error - couldn't reformat file system");
+  }
   _StdIn.advanceLine();
 }
 

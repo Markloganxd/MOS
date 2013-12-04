@@ -134,7 +134,6 @@ function CLIconsole() {
     
     // cycle through the previous commands
     this.showPreviousCommand = function(direction) {
-        console.log(this.history.length);
         if (this.historyIndex + direction - 1 < this.history.length && this.historyIndex + direction > 0) {
             this.historyIndex += direction;
             this.backspace(this.buffer.length);

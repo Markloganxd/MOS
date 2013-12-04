@@ -11,18 +11,23 @@ function DeviceDriverFileSystem() // Add or override specific attributes and met
   }
 
   this.formatFileSystem = function() {
-    for (var track = 0; track < 4; track++) {
-      for (var sector = 0; sector < 8; sector++) {
-        for (var block = 0; block < 8; block++) {
-          if (track + "" + sector + "" + block === "000") {
-            localStorage[track + "" + sector + "" + block] = "SPECIAL";
-          } else {
-            localStorage[track + "" + sector + "" + block] = "0000~";
-            var tsb = new TSB(track + "" + sector + "" + block);
-            tsb.clear();
+    try {
+      for (var track = 0; track < 4; track++) {
+        for (var sector = 0; sector < 8; sector++) {
+          for (var block = 0; block < 8; block++) {
+            if (track + "" + sector + "" + block === "000") {
+              localStorage[track + "" + sector + "" + block] = "SPECIAL";
+            } else {
+              localStorage[track + "" + sector + "" + block] = "0000~";
+              var tsb = new TSB(track + "" + sector + "" + block);
+              tsb.clear();
+            }
           }
         }
       }
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -66,6 +71,7 @@ function DeviceDriverFileSystem() // Add or override specific attributes and met
   }
 
   this.writeToFile = function(filename, contents) {
+    this.clearFile(filename);
     var segmentCount = Math.ceil(contents.length / 60);
     var segments = [];
     for (var i = 0; i < segmentCount; i++) {
@@ -141,6 +147,31 @@ function DeviceDriverFileSystem() // Add or override specific attributes and met
       }
     }
     return null;
+  }
+
+  this.clearFile = function(filename) {
+    var tsb = this.findDirectory(filename);
+    if (tsb !== null) {
+      var nextTSB = tsb.getLinkedTSB();
+      var currentTSB = nextTSB;
+      nextTSB = currentTSB.getLinkedTSB();
+      currentTSB.clear();
+      currentTSB.claim();
+      currentTSB = nextTSB;
+
+      // delete all links
+      while (currentTSB !== null) {
+        nextTSB = currentTSB.getLinkedTSB();
+        currentTSB.clear();
+        currentTSB = nextTSB;
+      }
+
+      return 1;
+    } else {
+      console.log("couldn't find");
+      //TODO throw error
+      return -1;
+    }
   }
 }
 
