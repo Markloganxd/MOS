@@ -136,13 +136,27 @@ function krnInterruptHandler(irq, params) // This is the Interrupt Handler Routi
       }
       break;
     case CONTEXT_SWITCH_IRQ:
-      _CPU.switchTo(krnFetchProcess(params));
-      // position the new current process as the first in ready queue
-      while (_ReadyQueue[0].pid !== _CurrentProcess.pid) {
-        _ReadyQueue.push(_ReadyQueue.shift());
-      }
-      SCHEDULER_COUNT = 0;
       hostLog("Changing context to process " + params + ".");
+      var process = krnFetchProcess(params);
+      if (process !== null && _ReadyQueue.indexOf(process) !== -1) {
+        if (process.partition === null) {
+          var partition = _MemoryManager.getFreePartition();
+          if (partition !== null) {
+            _MemoryManager.rollIn(process, partition);
+          } else {
+            var swappedProcess = _ReadyQueue[_ReadyQueue.length - 1];
+            var emptyPartition = swappedProcess.partition;
+            _MemoryManager.rollOut(swappedProcess);
+            _MemoryManager.rollIn(process, emptyPartition);
+          }
+        }
+        _CPU.switchTo(process);
+        // position the new current process as the first in ready queue
+        while (_ReadyQueue[0].pid !== _CurrentProcess.pid) {
+          _ReadyQueue.push(_ReadyQueue.shift());
+        }
+        SCHEDULER_COUNT = 0;
+      }
       break;
     case OS_ERROR:
       krnTrapError("OS error!");
@@ -221,7 +235,7 @@ function writeToConsole(type) {
 
 
 // mapping of pids to process control blocks
-var _Residents = [];
+var _Residents = {};
 
 // get PCB from pid
 function krnFetchProcess(pid) {
@@ -260,12 +274,6 @@ function krnFetchProcess(pid) {
 //}
 
 function krnKillProcess(pid) {
-  // print death message
-  _StdOut.putText("Process finished. State of PCB: ")
-  _StdOut.advanceLine();
-  _StdOut.putText(_Residents[pid].toString());
-  _StdOut.advanceLine();
-
   // see if the pid is in the ready queue
   var index = -1;
   for (var i = 0; i < _ReadyQueue.length; i++) {
@@ -276,12 +284,29 @@ function krnKillProcess(pid) {
 
   // if it is, then kill it 
   if (index !== -1) {
-    _ReadyQueue.splice(index, index + 1);
+    // print death message
+    _StdOut.putText("Process finished. State of PCB: ")
+    _StdOut.advanceLine();
+    _StdOut.putText(_Residents[pid].toString());
+    _StdOut.advanceLine();
+
+    // clear the memory or file containing process
+    if (_ReadyQueue[index].partition !== null) {
+      _MemoryManager.clearPartition(_ReadyQueue[index].partition);
+    } else if (findDirectory("_process_" + pid) !== null) {
+      deleteFile("_process_" + pid);
+    }
+    // remove the process from Ready Queue
+    _ReadyQueue.splice(index, 1);
+    // remove from residents list
+    delete _Residents[pid];
+
     // switch the context if the killed process is currently active
     if (index === 0 && _ReadyQueue.length > 0) {
       _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
     } else if (_ReadyQueue.length === 0) {
       _CurrentProcess = null;
+    } else {
     }
   }
 }
@@ -296,20 +321,26 @@ function krnStartProcess(pid) {
   if (process !== null) {
     _ReadyQueue.push(process);
     if (_CurrentProcess === null) {
-      _CurrentProcess = _ReadyQueue[0];
-      _CPU.switchTo(_ReadyQueue[0]);
+      _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
     }
   }
 }
 
 function krnStartAllProcesses(pid) {
-  for (var i = 0; i < _Residents.length; ++i) {
-    var process = _Residents[i];
+  //for (var i = 0; i < _Residents.length; ++i) {
+  for (var key in _Residents) {
+    var process = _Residents[key];
     krnStartProcess(process.pid);
   }
 }
 
 function krnCreateProcess(codes) {
+  // create pcb
+  var pcb = new ProcessControlBlock();
+  pcb.pid = getNewPid();
+  // adds to pcb map
+  krnRegisterProcess(pcb.pid, pcb);
+
   // clear memory in current block
   var partition = _MemoryManager.getFreePartition();
   if (partition != null) {
@@ -321,17 +352,17 @@ function krnCreateProcess(codes) {
       currentAddress++;
     });
 
-    // create pcb
-    var pcb = new ProcessControlBlock();
-    pcb.pid = getNewPid();
+    // register the partition
     pcb.partition = partition;
-
-    // adds to pcb map
-    krnRegisterProcess(pcb.pid, pcb);
-    return pcb.pid;
   } else {
-    return -1;
+    // tell the pcb that it's not in memory
+    pcb.partition = null;
+    
+    // put into filesystem
+    createFile("_process_" + pcb.pid);
+    writeToFile("_process_" + pcb.pid, codes.join(" "));
   }
+  return pcb.pid;
 }
 
 function getNewPid() {

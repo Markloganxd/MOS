@@ -16,6 +16,33 @@ function MemoryManager() {
         new Partition(this.partitionSize, this.partitionSize * 2),
         new Partition(this.partitionSize * 2, this.partitionSize * 3),
     ];
+    this.rollIn = function(pcb, partition) {
+      var codes = readFromFile("_process_" + pcb.pid).split(" ");
+      deleteFile("_process_" + pcb.pid);
+
+      // put codes in memory
+      var currentAddress = 0;
+      codes.forEach(function(code) {
+        _MemoryManager.storeByte(partition, currentAddress, code);
+        currentAddress++;
+        console.log("code: " + code);
+      });
+      partition.available = false;
+      pcb.partition = partition;
+    };
+    this.rollOut = function(pcb) {
+      // grap data from memory
+      var fileContents = "";
+      for (var i = 0; i < this.partitionSize; i++) {
+        fileContents += this.getByte(pcb.partition, i) + " ";
+      }
+      _MemoryManager.clearPartition(pcb.partition);
+      
+      // write data to file
+      createFile("_process_" + pcb.pid);
+      writeToFile("_process_" + pcb.pid, fileContents);
+      pcb.partition = null;
+    };
     this.getByte = function(partition, address) {
         if (partition.contains(address)) {
           return Memory[partition.base + address];

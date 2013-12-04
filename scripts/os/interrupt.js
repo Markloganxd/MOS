@@ -7,3 +7,4 @@ function Interrupt(_irq, _params) {
     this.irq = _irq;
     this.params = _params;
 }
+

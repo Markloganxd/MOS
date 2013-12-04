@@ -54,6 +54,28 @@ function createFile(filename) {
   }
 }
 
+function deleteFile(filename) {
+  var tsb = findDirectory(filename);
+  if (tsb !== null) {
+    var nextTSB = tsb.getLinkedTSB();
+    tsb.clear();
+    var currentTSB = nextTSB;
+
+    // delete all links
+    do {
+      nextTSB = currentTSB.getLinkedTSB();
+      currentTSB.clear();
+      currentTSB = nextTSB;
+    } while (currentTSB !== null);
+
+    return 1;
+  } else {
+    console.log("couldn't find");
+    //TODO throw error
+    return -1;
+  }
+}
+
 function writeToFile(filename, contents) {
   var segmentCount = Math.ceil(contents.length / 60);
   var segments = [];
@@ -98,9 +120,23 @@ function readFromFile(filename) {
     // return aggregated contents
     return contents;
   } else {
+    console.log("couldn't find");
     //TODO throw error
     return "";
   }
+}
+function getAllFilenames() {
+  var names = [];
+  var track = 0;
+  for (var sector = 0; sector < 8; sector++) {
+    for (var block = 0; block < 8; block++) {
+      var tsb = new TSB(track + "" + sector + "" + block);
+      if (tsb.isClaimed()) {
+        names.push(tsb.getContents());
+      }
+    }
+  }
+  return names;
 }
 
 function findDirectory(name) {
@@ -110,7 +146,8 @@ function findDirectory(name) {
       var tsb = new TSB(track + "" + sector + "" + block);
       if (tsb.isClaimed() && tsb.getContents() === name) {
         return tsb;
-      }
+      } else if (tsb.isClaimed()){
+      } 
     }
   }
   return null;
@@ -164,7 +201,11 @@ function TSB(id) {
     this.claimedBit = data[0];
     
     this.getLinkedTSB = function() {
-      return new TSB(this.linkedBlockId);
+      if (this.linkedBlockId !== "000") {
+        return new TSB(this.linkedBlockId);
+      } else {
+        return null;
+      }
     }
     this.getContents = function() {
        return this.contents;
@@ -183,16 +224,14 @@ function TSB(id) {
       this.claimedBit = "1";
       this.update();
     }
-    this.linkTo = function(tcb) {
-      this.linkedBlockId = tcb.id;
+    this.linkTo = function(tsb) {
+      this.linkedBlockId = tsb.id;
       this.update();
     }
     this.clear = function() {
       this.claimedBit = "0";
       this.linkedBlockId = "000";
-      for (var i = 0; i < 60; i++) {
-        this.contents += "~";
-      }
+      this.contents = "";
       this.update();
     }
     this.isClaimed = function() {

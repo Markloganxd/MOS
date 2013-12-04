@@ -14,7 +14,7 @@
 var APP_NAME = "MOS";  // 'cause I was at a loss for a better name.
 var APP_VERSION = "0.01";   // What did you expect?
 
-var CPU_CLOCK_INTERVAL = 100;   // This is in ms, or milliseconds, so 1000 = 1 second.
+var CPU_CLOCK_INTERVAL = 1;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
 var TIMER_IRQ = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                     // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
@@ -24,9 +24,8 @@ var KEYBOARD_ERROR = 3;
 var TERMINATE_PROCESS_IRQ = 4;
 var CONTEXT_SWITCH_IRQ = 5;
 var CONSOLE_OUTPUT_IRQ = 6;
-var CONTEXT_SWITCH_IRQ = 7;
-var WRITE_VIOLATION_IRQ = 8;
-var READ_VIOLATION_IRQ = 9;
+var WRITE_VIOLATION_IRQ = 7;
+var READ_VIOLATION_IRQ = 8;
 
 
 //
@@ -84,6 +83,7 @@ var PID_INCREMENTER = 0;
 // Scheduler data
 var SCHEDULER_QUANTUM = 6;
 var SCHEDULER_COUNT = 0;
+var SCHEDULER_TYPE = "rr";
 
 // For testing...
 var _GLaDOS = null;

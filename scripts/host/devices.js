@@ -92,8 +92,16 @@ function refreshDisplay() {
     if (i < _ReadyQueue.length) {
       document.getElementById("pid" + i).innerHTML = _ReadyQueue[i].pid;
       document.getElementById("state" + i).innerHTML = _ReadyQueue[i].state;
-      document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
-      document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
+      if (_ReadyQueue[i].partition !== null) {
+        document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
+      } else {
+        document.getElementById("base" + i).innerHTML = "mem";
+      }
+      if (_ReadyQueue[i].partition !== null) {
+        document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
+      } else {
+        document.getElementById("limit" + i).innerHTML = "mem";
+      }
     } else {
       document.getElementById("pid" + i).innerHTML = "-";
       document.getElementById("state" + i).innerHTML = "-";

@@ -150,11 +150,77 @@ function shellInit() {
     sc.description = " - kill a process by its pid";
     sc.function = shellKillProcess;
     this.commandList[this.commandList.length] = sc; 
-    
-    // processes - list the running processes and their IDs
-    // kill <id> - kills the specified process id.
 
-    //
+    // set the quantum for round robin scheduling
+    sc = new ShellCommand();
+    sc.command = "quantum";
+    sc.description = " - set the quantum for round robin scheduling";
+    sc.function = shellSetQuantum;
+    this.commandList[this.commandList.length] = sc; 
+    
+    // list the running processes
+    sc = new ShellCommand();
+    sc.command = "ps";
+    sc.description = " - list the running processes";
+    sc.function = shellListProcesses;
+    this.commandList[this.commandList.length] = sc; 
+
+    // create file
+    sc = new ShellCommand();
+    sc.command = "create";
+    sc.description = " - create a file";
+    sc.function = shellCreateFile;
+    this.commandList[this.commandList.length] = sc; 
+
+    // write to a file
+    sc = new ShellCommand();
+    sc.command = "write";
+    sc.description = " - write to a file";
+    sc.function = shellWriteToFile;
+    this.commandList[this.commandList.length] = sc; 
+
+    // read a file
+    sc = new ShellCommand();
+    sc.command = "read";
+    sc.description = " - read a file";
+    sc.function = shellReadFile;
+    this.commandList[this.commandList.length] = sc; 
+
+    // delete a file
+    sc = new ShellCommand();
+    sc.command = "delete";
+    sc.description = " - delete a file";
+    sc.function = shellDeleteFile;
+    this.commandList[this.commandList.length] = sc; 
+
+    // list all files
+    sc = new ShellCommand();
+    sc.command = "ls";
+    sc.description = " - list all files";
+    sc.function = shellListFiles;
+    this.commandList[this.commandList.length] = sc; 
+
+    // format the filesystem
+    sc = new ShellCommand();
+    sc.command = "format";
+    sc.description = " - format the filesystem";
+    sc.function = shellFormatFileSystem;
+    this.commandList[this.commandList.length] = sc; 
+
+    // set the current scheduling type
+    sc = new ShellCommand();
+    sc.command = "setschedule";
+    sc.description = " - set the current scheduling type: [rr, fcfs, priority]";
+    sc.function = shellSetSchedule;
+    this.commandList[this.commandList.length] = sc; 
+
+    // get the current scheduling type
+    sc = new ShellCommand();
+    sc.command = "getschedule";
+    sc.description = " - get the current scheduling type: [rr, fcfs, priority]";
+    sc.function = shellGetSchedule;
+    this.commandList[this.commandList.length] = sc; 
+
     // Display the initial prompt.
     this.putPrompt();
 }
@@ -216,8 +282,8 @@ function shellParseInput(buffer) {
     // 1. Remove leading and trailing spaces.
     buffer = trim(buffer);
 
-    // 2. Lower-case it.
-    buffer = buffer.toLowerCase();
+    // 2. Lower-case it. 
+    //buffer = buffer.toLowerCase();
 
     // 3. Separate on spaces so we can determine the command and command-line args, if any.
     var tempList = buffer.split(" ");
@@ -384,6 +450,98 @@ function shellDiffuseBomb() {
             _StdIn.refresh();
         }, 
     17000);
+}
+
+function shellSetQuantum(params) {
+  var schedule = params[0];
+  if (schedule === "rr" || schedule === "fcfs" || schedule === "priority") {
+    SCHEDULER_QUANTUM = params[0];
+  } else {
+    _StdIn.putText("Not a valid scheduler.");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellListProcesses(params) {
+  for (var key in _Residents) {
+    _StdIn.putText(_Residents[key].pid);
+    _StdIn.putText(" ");
+  }
+  _StdIn.advanceLine();
+}
+
+function shellCreateFile(params) {
+  var filename = params[0];
+  createFile(filename);
+}
+
+function shellReadFile(params) {
+  var filename = params[0];
+  if (findDirectory(filename) !== null) {
+    var contents = readFromFile(filename);
+    _StdIn.putText(contents);
+    _StdIn.advanceLine();
+  } else {
+    _StdIn.putText("File does not exist.");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellWriteToFile(params) {
+  var filename = params[0];
+  var contents = params.slice(1).join(" ");
+  if (findDirectory(filename) !== null) {
+    writeToFile(filename, contents);
+    _StdIn.putText("file written.");
+    _StdIn.advanceLine();
+  } else {
+    _StdIn.putText("File does not exist.");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellDeleteFile(params) {
+  var filename = params[0];
+  if (findDirectory(filename) !== null) {
+    deleteFile(filename);
+    _StdIn.putText("file removed.");
+    _StdIn.advanceLine();
+  } else {
+    _StdIn.putText("File does not exist.");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellListFiles(params) {
+  var files = getAllFilenames();
+  for (var i = 0; i < files.length; i++) {
+    console.log(files[i]);
+    _StdIn.putText(files[i] + " ");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellFormatFileSystem(params) {
+  formatFileSystem();
+  _StdIn.putText("file system reformatted.");
+  _StdIn.advanceLine();
+}
+
+function shellSetSchedule(params) {
+  var schedule = params[0];
+  if (schedule === "rr" || schedule === "fcfs" || schedule === "priority") {
+    SCHEDULER_TYPE = schedule;
+    _StdIn.putText("schedule type set.");
+    _StdIn.advanceLine();
+  } else {
+    _StdIn.putText("Not a valid scheduler.");
+    _StdIn.advanceLine();
+  }
+}
+
+function shellGetSchedule(params) {
+  _StdIn.putText(SCHEDULER_TYPE);
+  _StdIn.advanceLine();
 }
 
 // print whereami messages
