@@ -95,12 +95,12 @@ function refreshDisplay() {
       if (_ReadyQueue[i].partition !== null) {
         document.getElementById("base" + i).innerHTML = _ReadyQueue[i].partition.base;
       } else {
-        document.getElementById("base" + i).innerHTML = "FIL";
+        document.getElementById("base" + i).innerHTML = "HDD";
       }
       if (_ReadyQueue[i].partition !== null) {
         document.getElementById("limit" + i).innerHTML = _ReadyQueue[i].partition.limit;
       } else {
-        document.getElementById("limit" + i).innerHTML = "FIL";
+        document.getElementById("limit" + i).innerHTML = "HDD";
       }
       document.getElementById("priority" + i).innerHTML = _ReadyQueue[i].priority;
     } else {

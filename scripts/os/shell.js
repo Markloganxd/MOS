@@ -612,9 +612,9 @@ function shellChangeStatus(args) {
 }
 
 function shellLoad(args) {
-    var priority = 0;
+    var priority = 10;
     if (args.length > 0) {
-      priority = args[0];
+      priority = parseInt(args[0]);
     }
     var input = document.getElementById("taProgramInput").value;
     var program = validateInstructions(input);
@@ -636,6 +636,13 @@ function shellRun(args) {
 
 function shellRunAll(args) {
     krnStartAllProcesses(args[0]);
+    for (var key in _ReadyQueue) {
+      console.log("before: " + _ReadyQueue[key].pid, "priority: " + _ReadyQueue[key].priority);
+    }
+    krnUpdateProcessOrder();
+    for (var key in _ReadyQueue) {
+      console.log("after: " + _ReadyQueue[key].pid, "priority: " + _ReadyQueue[key].priority);
+    }
 }
 
 function shellCrashAndBurn() {
@@ -643,7 +650,11 @@ function shellCrashAndBurn() {
 }
 
 function shellKillProcess(args) {
-    krnKillProcess(parseInt(args[0]));
+    if (!krnKillProcess(parseInt(args[0]))) {
+      // process doesn't exist or isn't running
+      _StdOut.putText("No running process found with pid " + args[0]);
+      _StdOut.advanceLine();
+    }
 }
 
 function validateInstructions(program) {

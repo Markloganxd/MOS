@@ -362,8 +362,11 @@ function krnKillProcess(pid) {
       //_KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, _ReadyQueue[0].pid));
     } else if (_ReadyQueue.length === 0) {
       _CurrentProcess = null;
-    } else {
     }
+    return true;
+  } else {
+    // process doesn't exist or isn't running
+    return false;
   }
 }
 
@@ -387,14 +390,16 @@ function krnStartProcess(pid) {
 function krnUpdateProcessOrder() {
   if (SCHEDULER_TYPE === "priority") {
     _ReadyQueue = _ReadyQueue.sort(function(a, b) {
-      if (a.priority < b.priority) return 1;
-      else if (a.priority > b.priority) return -1;
+      if (b.priority < a.priority) return 1;
+      else if (b.priority > a.priority) return -1;
       else return 0;
     });
   }
-  if (_CurrentProcess !== nextProcess && _ReadyQueue.length > 0) {
+  if (_ReadyQueue.length > 0) {
     var nextProcess = _ReadyQueue[0];
-    _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, nextProcess.pid));
+    if (_CurrentProcess !== nextProcess) {
+      _KernelInterruptQueue.enqueue(new Interrupt(CONTEXT_SWITCH_IRQ, nextProcess.pid));
+    }
   }
 }
 
