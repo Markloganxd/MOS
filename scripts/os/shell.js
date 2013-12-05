@@ -469,8 +469,10 @@ function shellListProcesses(params) {
 }
 
 function shellCreateFile(params) {
-  var filename = params[0];
-  if (krnFileSystemDriver.findDirectory(filename) === null) {
+  if (params.length < 1) {
+    _StdIn.putText("Must provide filename.");
+  } else if (krnFileSystemDriver.findDirectory(params[0]) === null) {
+    var filename = params[0];
     krnFileSystemDriver.createFile(filename);
     _StdIn.putText("File created.");
   } else {
@@ -480,47 +482,48 @@ function shellCreateFile(params) {
 }
 
 function shellReadFile(params) {
-  var filename = params[0];
-  if (krnFileSystemDriver.findDirectory(filename) !== null) {
+  if (params.length < 1) {
+    _StdIn.putText("Must provide filename.");
+  } else if (krnFileSystemDriver.findDirectory(params[0]) !== null) {
+    var filename = params[0];
     var contents = krnFileSystemDriver.readFromFile(filename);
     _StdIn.putText(contents);
-    _StdIn.advanceLine();
   } else {
     _StdIn.putText("File does not exist.");
-    _StdIn.advanceLine();
   }
+  _StdIn.advanceLine();
 }
 
 function shellWriteToFile(params) {
-  var filename = params[0];
-  var contents = params.slice(1).join(" ");
-  if (krnFileSystemDriver.findDirectory(filename) !== null) {
+  if (params.length < 2) {
+    _StdIn.putText("Must provide filename and string.");
+  } else if (krnFileSystemDriver.findDirectory(params[0]) !== null) {
+    var filename = params[0];
+    var contents = params.slice(1).join(" ");
     krnFileSystemDriver.writeToFile(filename, contents);
     _StdIn.putText("file written.");
-    _StdIn.advanceLine();
   } else {
     _StdIn.putText("File does not exist.");
-    _StdIn.advanceLine();
   }
+  _StdIn.advanceLine();
 }
 
 function shellDeleteFile(params) {
-  var filename = params[0];
-  if (krnFileSystemDriver.findDirectory(filename) !== null) {
-    //krnFileSystemDriver.deleteFile(filename);
-    krnFileSystemDriver.clearFile(filename);
+  if (params.length < 1) {
+    _StdIn.putText("Must provide filename.");
+  } else if (krnFileSystemDriver.findDirectory(params[0]) !== null) {
+    var filename = params[0];
+    krnFileSystemDriver.deleteFile(filename);
     _StdIn.putText("file removed.");
-    _StdIn.advanceLine();
   } else {
     _StdIn.putText("File does not exist.");
-    _StdIn.advanceLine();
   }
+  _StdIn.advanceLine();
 }
 
 function shellListFiles(params) {
   var files = krnFileSystemDriver.getAllFilenames();
   for (var i = 0; i < files.length; i++) {
-    console.log(files[i]);
     _StdIn.putText(files[i] + " ");
     _StdIn.advanceLine();
   }
@@ -536,16 +539,17 @@ function shellFormatFileSystem(params) {
 }
 
 function shellSetSchedule(params) {
-  var schedule = params[0];
-  if (schedule === "rr" || schedule === "fcfs" || schedule === "priority") {
+  if (params.length < 1) {
+    _StdIn.putText("Must provide schedule type [rr, fcfs, priority].");
+  } else if (params[0] === "rr" || params[0] === "fcfs" || params[0] === "priority") {
+    var schedule = params[0];
     SCHEDULER_TYPE = schedule;
     krnUpdateProcessOrder();
     _StdIn.putText("schedule type set.");
-    _StdIn.advanceLine();
   } else {
     _StdIn.putText("Not a valid scheduler.");
-    _StdIn.advanceLine();
   }
+  _StdIn.advanceLine();
 }
 
 function shellGetSchedule(params) {

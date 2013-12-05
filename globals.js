@@ -14,7 +14,7 @@
 var APP_NAME = "MOS";  // 'cause I was at a loss for a better name.
 var APP_VERSION = "0.01";   // What did you expect?
 
-var CPU_CLOCK_INTERVAL = 1;   // This is in ms, or milliseconds, so 1000 = 1 second.
+var CPU_CLOCK_INTERVAL = 60;   // This is in ms, or milliseconds, so 1000 = 1 second.
 
 var TIMER_IRQ = 0;  // Pages 23 (timer), 9 (interrupts), and 561 (interrupt priority).
                     // NOTE: The timer is different from hardware/host clock pulses. Don't confuse these.
